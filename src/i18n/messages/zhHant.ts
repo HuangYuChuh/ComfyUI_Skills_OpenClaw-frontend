@@ -179,4 +179,6 @@ export const zhHantMessages = {
   migration_review_hint: "這個參數已發生變化，建議儲存前重新檢查。",
   server_status_online: "在線",
   server_status_offline: "離線",
+  update_available: "前端有新版本可用（{commit}），請運行 scripts/update_frontend.sh 更新。",
+  update_dismiss: "關閉",
 };

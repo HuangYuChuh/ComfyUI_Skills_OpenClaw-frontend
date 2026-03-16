@@ -4,6 +4,8 @@ import { safeWriteLocalStorage } from "../lib/storage";
 import type { ToastMessage } from "../components/ui/ToastViewport";
 import type { TranslateFn, ViewMode } from "./state";
 
+import { checkFrontendUpdate, type UpdateCheckResult } from "../services/update";
+
 interface UseAppEffectsArgs {
   language: string;
   toasts: ToastMessage[];
@@ -11,6 +13,7 @@ interface UseAppEffectsArgs {
   loadInitialServers: () => Promise<void>;
   refreshWorkflows: () => Promise<void>;
   pushToast: (type: "error", message: string) => void;
+  setUpdateInfo: (info: UpdateCheckResult | null) => void;
   t: TranslateFn;
   viewMode: ViewMode;
   hasUnsavedChanges: boolean;
@@ -39,6 +42,20 @@ export function useAppEffects(args: UseAppEffectsArgs) {
     Promise.all([args.loadInitialServers(), args.refreshWorkflows()]).catch((error: unknown) => {
       args.pushToast("error", error instanceof Error ? error.message : args.t("err_load_cfg"));
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem("update-banner-dismissed");
+    if (dismissed) return;
+    const timer = setTimeout(() => {
+      checkFrontendUpdate()
+        .then((result) => {
+          if (result.has_update) args.setUpdateInfo(result);
+        })
+        .catch(() => {});
+    }, 3000);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

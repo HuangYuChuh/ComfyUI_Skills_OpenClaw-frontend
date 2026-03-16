@@ -1,5 +1,6 @@
 import { ConfirmDialog } from "./components/ui/ConfirmDialog";
 import { ToastViewport } from "./components/ui/ToastViewport";
+import { UpdateBanner } from "./components/ui/UpdateBanner";
 import { EditorView } from "./features/editor/EditorView";
 import { TransferModal } from "./features/transfer/TransferModal";
 import { MainShell } from "./app/MainShell";
@@ -10,6 +11,13 @@ export default function App() {
 
   return (
     <>
+      {controller.updateInfo?.has_update && (
+        <UpdateBanner
+          remoteCommit={controller.updateInfo.remote_commit || ""}
+          onDismiss={controller.dismissUpdate}
+          t={controller.t}
+        />
+      )}
       <ToastViewport toasts={controller.toasts} onDismiss={controller.dismissToast} />
       {controller.viewMode === "main" ? (
         <MainShell

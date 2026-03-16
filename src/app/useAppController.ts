@@ -24,6 +24,7 @@ import {
 import { createWorkflowActions } from "./workflowActions";
 import { listWorkflows } from "../services/workflows";
 import { buildTransferExport, importTransferBundle, previewTransferExport, previewTransferImport } from "../services/transfer";
+import { checkFrontendUpdate, type UpdateCheckResult } from "../services/update";
 
 interface TransferState {
   open: boolean;
@@ -93,6 +94,7 @@ export function useAppController() {
   const [workflowSort, setWorkflowSort] = useState("custom");
   const [lastAutoWorkflowId, setLastAutoWorkflowId] = useState("");
   const [transferState, setTransferState] = useState<TransferState>(initialTransferState());
+  const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null);
 
   const versionUploadRef = useRef<HTMLInputElement | null>(null);
   const transferImportRef = useRef<HTMLInputElement | null>(null);
@@ -410,6 +412,11 @@ export function useAppController() {
     versionUploadRef,
   });
 
+  function dismissUpdate() {
+    sessionStorage.setItem("update-banner-dismissed", "1");
+    setUpdateInfo(null);
+  }
+
   useAppEffects({
     language,
     toasts,
@@ -417,6 +424,7 @@ export function useAppController() {
     loadInitialServers: serverManagement.loadInitialServers,
     refreshWorkflows,
     pushToast,
+    setUpdateInfo,
     t,
     viewMode,
     hasUnsavedChanges: editorState.hasUnsavedChanges,
@@ -494,5 +502,7 @@ export function useAppController() {
     handleVersionFileChange: editorActions.handleVersionFileChange,
     handleReorderWorkflows: workflowActions.handleReorderWorkflows,
     createWorkflow: editorActions.createWorkflow,
+    updateInfo,
+    dismissUpdate,
   };
 }
