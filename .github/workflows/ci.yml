@@ -22,3 +22,42 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  publish-latest:
+    name: Publish Latest
+    needs: test-and-build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - name: Write version file
+        run: |
+          cat > public/version.json <<EOF
+          {"commit":"${{ github.sha }}","date":"$(date -u +%Y-%m-%dT%H:%M:%SZ)"}
+          EOF
+      - run: npm run build
+      - name: Package dist
+        run: tar -czf frontend-dist.tar.gz -C dist .
+      - name: Update latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Build
+          prerelease: true
+          files: |
+            frontend-dist.tar.gz
+            dist/version.json
+          body: |
+            Rolling release — automatically built from the latest `main` commit.
+
+            **Commit:** `${{ github.sha }}`
+            **Date:** ${{ github.event.head_commit.timestamp }}
+
+            Run `scripts/update_frontend.sh` in the main repository to update.
