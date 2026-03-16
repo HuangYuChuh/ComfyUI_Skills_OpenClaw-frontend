@@ -218,4 +218,6 @@ export const zhMessages = {
   migration_review_hint: "这个参数发生了变化，保存前建议重新检查。",
   server_status_online: "在线",
   server_status_offline: "离线",
+  update_available: "前端有新版本可用（{commit}），请运行 scripts/update_frontend.sh 更新。",
+  update_dismiss: "关闭",
 };

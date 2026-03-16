@@ -218,4 +218,6 @@ export const enMessages = {
   migration_review_hint: "This parameter changed and should be reviewed before saving.",
   server_status_online: "Online",
   server_status_offline: "Offline",
+  update_available: "A newer frontend build is available ({commit}). Run scripts/update_frontend.sh to update.",
+  update_dismiss: "Dismiss",
 };
