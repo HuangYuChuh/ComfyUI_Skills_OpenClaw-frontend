@@ -372,6 +372,7 @@ describe("App", () => {
         id: "remote",
         name: "Remote",
         url: "http://10.0.0.1:8188",
+        auth: "",
         enabled: true,
         output_dir: "./outputs",
       });
@@ -453,6 +454,7 @@ describe("App", () => {
         id: "local",
         name: "Local Updated",
         url: "http://127.0.0.1:8188",
+        auth: "",
         enabled: true,
         output_dir: "./outputs",
       });

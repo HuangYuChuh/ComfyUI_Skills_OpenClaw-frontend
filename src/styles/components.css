@@ -9,6 +9,9 @@
   cursor: pointer;
   transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .custom-select-option:hover,
@@ -326,5 +329,80 @@ button {
   min-width: 44px;
   min-height: 44px;
   padding: 0;
+}
+
+.input-with-toggle {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.input-with-toggle .input-field {
+  flex: 1;
+  padding-right: 44px;
+}
+
+.input-toggle-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.input-toggle-btn:hover {
+  opacity: 0.85;
+}
+
+.form-test-connection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btn-sm {
+  min-height: 34px;
+  padding: 4px 14px;
+  font-size: 13px;
+}
+
+.test-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  animation: fadeIn 0.2s ease;
+}
+
+.test-result-ok {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.32);
+  color: #6ee7b7;
+}
+
+.test-result-fail {
+  background: rgba(244, 63, 94, 0.14);
+  border-color: rgba(244, 63, 94, 0.32);
+  color: #fda4af;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
