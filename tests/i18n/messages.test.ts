@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { messages } from "./messages";
+import { messages } from "../../src/i18n/messages";
 
 describe("i18n messages", () => {
   it("keeps the same translation keys across languages", () => {

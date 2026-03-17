@@ -1,9 +1,21 @@
 import { useState } from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
-import { ServerManager } from "./ServerManager";
-import type { SaveServerPayload, ServerDto } from "../../types/api";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ServerManager } from "../../../src/features/servers/ServerManager";
+import type { SaveServerPayload, ServerDto } from "../../../src/types/api";
+
+const { getServerStatusMock } = vi.hoisted(() => ({
+  getServerStatusMock: vi.fn(),
+}));
+
+vi.mock("../../../src/services/servers", async () => {
+  const actual = await vi.importActual<typeof import("../../../src/services/servers")>("../../../src/services/servers");
+  return {
+    ...actual,
+    getServerStatus: getServerStatusMock,
+  };
+});
 
 const messages: Record<string, string> = {
   server_manager: "Server Manager",
@@ -12,6 +24,8 @@ const messages: Record<string, string> = {
   create_first_server: "Create First Server",
   current_server_title: "Current Server",
   select_server: "Select Server",
+  import_all_from_comfyui: "Import All from ComfyUI",
+  bulk_import_loading: "Importing...",
   server_enabled: "Enabled",
   server_disabled: "Disabled",
   edit: "Edit",
@@ -30,7 +44,8 @@ const messages: Record<string, string> = {
   server_url_label: "Server URL",
   server_unsupported_short: "(Unsupported)",
   server_unsupported_reason: "Server type \"{type}\" is not supported in this branch. Remove or migrate this server before using it.",
-new_server_url_placeholder: "http://127.0.0.1:8188",
+  server_url_help_comfyui: "Directly calls the standard ComfyUI endpoints: `/prompt`, `/history/{id}`, and `/view`.",
+  new_server_url_placeholder: "http://127.0.0.1:8188",
   server_output_dir: "Output Directory",
 };
 
@@ -72,8 +87,10 @@ function Harness({
       onSelectServer={vi.fn()}
       onToggleServer={vi.fn()}
       onDeleteServer={vi.fn()}
+      onImportAllFromComfyUI={vi.fn()}
       onOpenCreate={vi.fn()}
       onOpenEdit={vi.fn()}
+      importingComfyUI={false}
       modalOpen
       modalMode={modalMode}
       form={form}
@@ -86,6 +103,10 @@ function Harness({
 }
 
 describe("ServerManager", () => {
+  beforeEach(() => {
+    getServerStatusMock.mockResolvedValue({ server_id: "local", status: "online", url: "http://127.0.0.1:8188" });
+  });
+
   it("seeds the default ComfyUI URL for a new server", async () => {
     render(<Harness initialForm={{ ...defaultForm }} />);
 
@@ -132,8 +153,12 @@ describe("ServerManager", () => {
     });
   });
 
-  it("renders static current server text instead of a selector when only one server exists", () => {
+  it("renders static current server text instead of a selector when only one server exists", async () => {
     render(<Harness servers={[serverFixture]} modalMode="edit" initialForm={defaultForm} />);
+
+    await waitFor(() => {
+      expect(getServerStatusMock).toHaveBeenCalled();
+    });
 
     const serverCard = screen.getByText("Current Server").closest(".server-main-left") as HTMLElement;
     expect(within(serverCard).getByText("Local")).toBeInTheDocument();
@@ -156,5 +181,35 @@ describe("ServerManager", () => {
     expect(serverNameInput).toHaveFocus();
     expect(serverNameInput).toHaveValue("Remote Server");
     expect(screen.getByLabelText("Server ID")).toHaveValue("");
+  });
+
+  it("triggers the ComfyUI bulk import action from the header", async () => {
+    const user = userEvent.setup();
+    const onImportAllFromComfyUI = vi.fn();
+
+    render(
+      <ServerManager
+        servers={[serverFixture]}
+        currentServerId={serverFixture.id}
+        onSelectServer={vi.fn()}
+        onToggleServer={vi.fn()}
+        onDeleteServer={vi.fn()}
+        onImportAllFromComfyUI={onImportAllFromComfyUI}
+        onOpenCreate={vi.fn()}
+        onOpenEdit={vi.fn()}
+        importingComfyUI={false}
+        modalOpen={false}
+        modalMode="edit"
+        form={{ ...defaultForm, id: serverFixture.id, name: serverFixture.name, url: serverFixture.url }}
+        onFormChange={vi.fn()}
+        onCloseModal={vi.fn()}
+        onSubmitModal={vi.fn()}
+        t={t}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Import All from ComfyUI" }));
+
+    expect(onImportAllFromComfyUI).toHaveBeenCalledTimes(1);
   });
 });

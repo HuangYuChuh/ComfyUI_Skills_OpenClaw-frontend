@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyEditorParamUpdate, applyVisibleExposure } from "./editorState";
-import type { SchemaParamMap } from "../types/editor";
+import { applyEditorParamUpdate, applyVisibleExposure } from "../../src/lib/editorState";
+import type { SchemaParamMap } from "../../src/types/editor";
 
 const schemaParams: SchemaParamMap = {
   "1_text": {

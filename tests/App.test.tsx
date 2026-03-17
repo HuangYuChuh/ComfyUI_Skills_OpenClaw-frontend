@@ -15,6 +15,8 @@ const {
   deleteWorkflowMock,
   reorderWorkflowsMock,
   runWorkflowMock,
+  importWorkflowsFromComfyUIMock,
+  importLocalWorkflowsMock,
   previewTransferExportMock,
   buildTransferExportMock,
   previewTransferImportMock,
@@ -32,21 +34,25 @@ const {
   deleteWorkflowMock: vi.fn(),
   reorderWorkflowsMock: vi.fn(),
   runWorkflowMock: vi.fn(),
+  importWorkflowsFromComfyUIMock: vi.fn(),
+  importLocalWorkflowsMock: vi.fn(),
   previewTransferExportMock: vi.fn(),
   buildTransferExportMock: vi.fn(),
   previewTransferImportMock: vi.fn(),
   importTransferBundleMock: vi.fn(),
 }));
 
-vi.mock("./services/servers", () => ({
+vi.mock("../src/services/servers", () => ({
   listServers: listServersMock,
   addServer: addServerMock,
   updateServer: updateServerMock,
   toggleServer: toggleServerMock,
   deleteServer: deleteServerMock,
+  getServerStatus: vi.fn().mockResolvedValue({ server_id: "local", status: "online", url: "http://127.0.0.1:8188" }),
+  testServerConnection: vi.fn().mockResolvedValue({ status: "online" }),
 }));
 
-vi.mock("./services/workflows", () => ({
+vi.mock("../src/services/workflows", () => ({
   listWorkflows: listWorkflowsMock,
   getWorkflowDetail: getWorkflowDetailMock,
   saveWorkflow: saveWorkflowMock,
@@ -54,20 +60,22 @@ vi.mock("./services/workflows", () => ({
   deleteWorkflow: deleteWorkflowMock,
   reorderWorkflows: reorderWorkflowsMock,
   runWorkflow: runWorkflowMock,
+  importWorkflowsFromComfyUI: importWorkflowsFromComfyUIMock,
+  importLocalWorkflows: importLocalWorkflowsMock,
 }));
 
-vi.mock("./services/transfer", () => ({
+vi.mock("../src/services/transfer", () => ({
   previewTransferExport: previewTransferExportMock,
   buildTransferExport: buildTransferExportMock,
   previewTransferImport: previewTransferImportMock,
   importTransferBundle: importTransferBundleMock,
 }));
 
-vi.mock("./lib/pixelBlastBackground", () => ({
+vi.mock("../src/lib/pixelBlastBackground", () => ({
   initPixelBlastBackground: vi.fn(() => undefined),
 }));
 
-import App from "./App";
+import App from "../src/App";
 
 const serverFixture = {
   id: "local",
@@ -203,6 +211,39 @@ const importPreviewFixtureLatest = {
   },
 };
 
+const bulkImportReportFixture = {
+  summary: {
+    created: 1,
+    renamed: 1,
+    skipped: 0,
+    failed: 1,
+    total: 3,
+  },
+  items: [
+    {
+      workflow_id: "portrait",
+      final_workflow_id: "portrait",
+      source_label: "portrait.json",
+      status: "created" as const,
+      reason: "",
+    },
+    {
+      workflow_id: "portrait",
+      final_workflow_id: "portrait-2",
+      source_label: "workflows/portrait.json",
+      status: "renamed" as const,
+      reason: "",
+    },
+    {
+      workflow_id: "",
+      final_workflow_id: "",
+      source_label: "broken.json",
+      status: "failed" as const,
+      reason: "Invalid JSON file.",
+    },
+  ],
+};
+
 async function uploadWorkflowFile(fileName = "workflow_api.json", content = workflowApiJson) {
   const fileInput = document.getElementById("file-upload") as HTMLInputElement;
   const file = new File([content], fileName, { type: "application/json" });
@@ -254,6 +295,8 @@ describe("App", () => {
     deleteWorkflowMock.mockResolvedValue({ status: "ok" });
     reorderWorkflowsMock.mockResolvedValue({ status: "ok", workflow_order: [] });
     runWorkflowMock.mockResolvedValue({ status: "ok", result: { images: [] } });
+    importWorkflowsFromComfyUIMock.mockResolvedValue({ status: "success", report: bulkImportReportFixture });
+    importLocalWorkflowsMock.mockResolvedValue({ status: "success", report: bulkImportReportFixture });
     previewTransferExportMock.mockResolvedValue(exportPreviewFixture);
     buildTransferExportMock.mockResolvedValue({ bundle: { ok: true }, preview: exportPreviewFixture });
     previewTransferImportMock.mockResolvedValue(importPreviewFixture);
@@ -597,5 +640,56 @@ describe("App", () => {
       expect(screen.getByText("remote-latest/wf-latest")).toBeInTheDocument();
       expect(screen.queryByText("remote/wf-b")).not.toBeInTheDocument();
     });
+  });
+
+  it("imports all saved workflows from ComfyUI and shows the result report", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: "Import All from ComfyUI" }));
+
+    await waitFor(() => {
+      expect(importWorkflowsFromComfyUIMock).toHaveBeenCalledWith("local");
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("ComfyUI Import Report")).toBeInTheDocument();
+    expect(within(dialog).getByText("portrait.json")).toBeInTheDocument();
+    expect(within(dialog).getByText("workflows/portrait.json")).toBeInTheDocument();
+    expect(within(dialog).getByText("broken.json")).toBeInTheDocument();
+  });
+
+  it("imports local workflow files and sends file contents to the batch import API", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const localImportInput = document.getElementById("bulk-import-files") as HTMLInputElement;
+    const apiWorkflow = new File([workflowApiJson], "workflow_api.json", { type: "application/json" });
+    const editorWorkflowContent = JSON.stringify({
+      nodes: [{ id: 1, type: "CLIPTextEncode", inputs: [], widgets_values: ["hello"] }],
+      links: [],
+    });
+    const editorWorkflow = new File([editorWorkflowContent], "editor.json", { type: "application/json" });
+    Object.defineProperty(apiWorkflow, "text", { value: async () => workflowApiJson });
+    Object.defineProperty(editorWorkflow, "text", { value: async () => editorWorkflowContent });
+    Object.defineProperty(editorWorkflow, "webkitRelativePath", { value: "folder/editor.json" });
+
+    await user.upload(localImportInput, [apiWorkflow, editorWorkflow]);
+
+    await waitFor(() => {
+      expect(importLocalWorkflowsMock).toHaveBeenCalledWith("local", [
+        {
+          file_name: "workflow_api.json",
+          content: workflowApiJson,
+        },
+        {
+          file_name: "folder/editor.json",
+          content: editorWorkflowContent,
+        },
+      ]);
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Local Import Report")).toBeInTheDocument();
   });
 });

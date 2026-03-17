@@ -4,8 +4,8 @@ import {
   migrateSchemaParams,
   parseWorkflowUpload,
   suggestWorkflowId,
-} from "./workflowMapper";
-import type { SchemaParamMap } from "../types/editor";
+} from "../../src/lib/workflowMapper";
+import type { SchemaParamMap } from "../../src/types/editor";
 
 describe("workflowMapper", () => {
   it("parses api workflows and auto-exposes prompt params", () => {

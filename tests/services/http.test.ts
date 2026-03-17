@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { requestJson } from "./http";
+import { requestJson } from "../../src/services/http";
 
 describe("requestJson", () => {
   it("parses validation errors into a single message", async () => {
