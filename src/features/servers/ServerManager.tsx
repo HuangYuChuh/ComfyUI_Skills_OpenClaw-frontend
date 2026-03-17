@@ -297,7 +297,6 @@ export function ServerManager(props: ServerManagerProps) {
               placeholder={props.t("new_server_url_placeholder")}
               autoComplete="off"
             />
-            <p className="form-help">{props.t("server_url_help_comfyui")}</p>
           </div>
           <div className="form-group form-group-full">
             <label htmlFor="modal-server-auth">{props.t("server_auth_label")}</label>
