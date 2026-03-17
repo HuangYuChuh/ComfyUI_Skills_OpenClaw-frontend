@@ -13,6 +13,7 @@ export default function App() {
     <>
       {controller.updateInfo?.has_update && (
         <UpdateBanner
+          localCommit={controller.updateInfo.local_commit || ""}
           remoteCommit={controller.updateInfo.remote_commit || ""}
           onDismiss={controller.dismissUpdate}
           t={controller.t}

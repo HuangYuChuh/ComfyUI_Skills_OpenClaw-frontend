@@ -37,6 +37,22 @@
   color: var(--text-main);
 }
 
+.update-banner-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.update-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.update-banner-error {
+  color: #fca5a5;
+}
+
 .update-banner-close {
   width: 24px;
   height: 24px;
