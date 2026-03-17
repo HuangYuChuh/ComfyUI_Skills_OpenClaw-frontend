@@ -44,7 +44,7 @@ export function MainShell(props: MainShellProps) {
     <main className="page shell">
       <header className="page-header">
         <div className="logo-frame" aria-hidden="true">
-          <img className="logo-image" src="/static/logo.png" alt="ComfyUI OpenClaw logo" />
+          <img className="logo-image" src={`${import.meta.env.BASE_URL}logo.png`} alt="ComfyUI OpenClaw logo" />
         </div>
         <div className="page-title-group">
           <h1>{props.t("title")}</h1>

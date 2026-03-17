@@ -32,6 +32,7 @@ export function defaultServerForm(): SaveServerPayload {
     id: "",
     name: "",
     url: "",
+    auth: "",
     enabled: true,
     output_dir: "./outputs",
   };

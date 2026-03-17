@@ -2,6 +2,7 @@ export interface ServerDto {
   id: string;
   name: string;
   url: string;
+  auth?: string;
   enabled: boolean;
   output_dir: string;
   server_type?: string;
@@ -63,6 +64,7 @@ export interface SaveServerPayload {
   id?: string | null;
   name: string;
   url: string;
+  auth?: string;
   enabled: boolean;
   output_dir: string;
 }

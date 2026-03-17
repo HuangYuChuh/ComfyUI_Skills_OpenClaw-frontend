@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { CustomSelect } from "../../components/ui/CustomSelect";
 import { Modal } from "../../components/ui/Modal";
-import { getServerStatus } from "../../services/servers";
+import { getServerStatus, testServerConnection } from "../../services/servers";
 import type { SaveServerPayload, ServerDto } from "../../types/api";
 
 const DEFAULT_COMFYUI_URL = "http://127.0.0.1:8188";
@@ -87,6 +87,8 @@ export function ServerManager(props: ServerManagerProps) {
   const hasSeededDefaultUrlRef = useRef(false);
 
   const [serverStatus, setServerStatus] = useState<ServerRunStatus>("checking");
+  const [showAuth, setShowAuth] = useState(false);
+  const [testResult, setTestResult] = useState<{ state: "idle" | "testing" | "online" | "offline"; message?: string }>({ state: "idle" });
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +114,8 @@ export function ServerManager(props: ServerManagerProps) {
   useEffect(() => {
     if (!props.modalOpen) {
       hasSeededDefaultUrlRef.current = false;
+      setShowAuth(false);
+      setTestResult({ state: "idle" });
       return;
     }
     if (hasSeededDefaultUrlRef.current) {
@@ -134,6 +138,18 @@ export function ServerManager(props: ServerManagerProps) {
   function statusLabel(): string {
     if (serverStatus === "checking") return "...";
     return props.t(serverStatus === "online" ? "server_status_online" : "server_status_offline");
+  }
+
+  async function handleTestConnection() {
+    const url = (props.form.url || "").trim();
+    if (!url) return;
+    setTestResult({ state: "testing" });
+    try {
+      const result = await testServerConnection(url, props.form.auth ?? "");
+      setTestResult({ state: result.status, message: result.message });
+    } catch {
+      setTestResult({ state: "offline", message: "Request failed" });
+    }
   }
 
   return (
@@ -282,6 +298,56 @@ export function ServerManager(props: ServerManagerProps) {
               autoComplete="off"
             />
             <p className="form-help">{props.t("server_url_help_comfyui")}</p>
+          </div>
+          <div className="form-group form-group-full">
+            <label htmlFor="modal-server-auth">{props.t("server_auth_label")}</label>
+            <div className="input-with-toggle">
+              <input
+                id="modal-server-auth"
+                type={showAuth ? "text" : "password"}
+                className="input-field"
+                value={props.form.auth ?? ""}
+                onChange={onInputChange("auth")}
+                placeholder={props.t("server_auth_placeholder")}
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                className="btn-icon input-toggle-btn"
+                onClick={() => setShowAuth((v) => !v)}
+                aria-label={showAuth ? "Hide token" : "Show token"}
+                tabIndex={-1}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                  {!showAuth && <line x1="1" y1="1" x2="23" y2="23" />}
+                </svg>
+              </button>
+            </div>
+            <p className="form-help">{props.t("server_auth_help")}</p>
+            <div className="form-test-connection">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleTestConnection}
+                disabled={!props.form.url?.trim() || testResult.state === "testing"}
+              >
+                {testResult.state === "testing" ? props.t("server_test_testing") : props.t("server_test_connection")}
+              </button>
+              {testResult.state === "online" && (
+                <span className="test-result test-result-ok">
+                  <StatusDot status="online" />
+                  {props.t("server_test_ok")}
+                </span>
+              )}
+              {testResult.state === "offline" && (
+                <span className="test-result test-result-fail">
+                  <StatusDot status="offline" />
+                  {props.t("server_test_fail")}{testResult.message ? ` — ${testResult.message}` : ""}
+                </span>
+              )}
+            </div>
           </div>
           <div className="form-group form-group-full">
             <label htmlFor="modal-server-output">{props.t("server_output_dir")}</label>

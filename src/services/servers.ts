@@ -41,3 +41,10 @@ export function getServerStatus(serverId: string) {
   return requestJson<{ server_id: string; status: "online" | "offline"; url: string }>(`/api/servers/${encodeURIComponent(serverId)}/status`);
 }
 
+export function testServerConnection(url: string, auth: string) {
+  return requestJson<{ status: "online" | "offline"; message?: string }>("/api/servers/test-connection", {
+    method: "POST",
+    body: JSON.stringify({ url, auth }),
+  });
+}
+
