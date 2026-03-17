@@ -30,8 +30,7 @@ const messages: Record<string, string> = {
   server_url_label: "Server URL",
   server_unsupported_short: "(Unsupported)",
   server_unsupported_reason: "Server type \"{type}\" is not supported in this branch. Remove or migrate this server before using it.",
-  server_url_help_comfyui: "Directly calls the standard ComfyUI endpoints: `/prompt`, `/history/{id}`, and `/view`.",
-  new_server_url_placeholder: "http://127.0.0.1:8188",
+new_server_url_placeholder: "http://127.0.0.1:8188",
   server_output_dir: "Output Directory",
 };
 
