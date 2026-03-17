@@ -4,7 +4,7 @@ import { safeWriteLocalStorage } from "../lib/storage";
 import type { ToastMessage } from "../components/ui/ToastViewport";
 import type { TranslateFn, ViewMode } from "./state";
 
-import { checkFrontendUpdate, type UpdateCheckResult } from "../services/update";
+import { checkSystemUpdate, type UpdateCheckResult } from "../services/update";
 
 interface UseAppEffectsArgs {
   language: string;
@@ -49,7 +49,7 @@ export function useAppEffects(args: UseAppEffectsArgs) {
     const dismissed = sessionStorage.getItem("update-banner-dismissed");
     if (dismissed) return;
     const timer = setTimeout(() => {
-      checkFrontendUpdate()
+      checkSystemUpdate()
         .then((result) => {
           if (result.has_update) args.setUpdateInfo(result);
         })
