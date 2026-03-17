@@ -11,11 +11,14 @@ interface WorkflowManagerProps {
   onSortChange: (value: string) => void;
   onCreateWorkflow: () => void;
   onCreateWorkflowFromFile: (file: File | null) => void;
+  onImportLocalFiles: () => void;
+  onImportLocalFolder: () => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
   onDeleteWorkflow: (workflow: WorkflowSummaryDto) => void;
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
+  importingLocal: boolean;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
@@ -129,6 +132,22 @@ export function WorkflowManager(props: WorkflowManagerProps) {
         </div>
         <div className="panel-actions">
           {props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta">{summary}</p> : null}
+          <button
+            type="button"
+            className="btn btn-secondary panel-action-btn"
+            onClick={props.onImportLocalFiles}
+            disabled={props.importingLocal}
+          >
+            {props.importingLocal ? props.t("bulk_import_loading") : props.t("import_local_files")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary panel-action-btn"
+            onClick={props.onImportLocalFolder}
+            disabled={props.importingLocal}
+          >
+            {props.importingLocal ? props.t("bulk_import_loading") : props.t("import_local_folder")}
+          </button>
           <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onCreateWorkflow}>
             {props.t("register_new_short")}
           </button>

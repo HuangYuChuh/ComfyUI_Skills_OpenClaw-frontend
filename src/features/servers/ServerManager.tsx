@@ -14,8 +14,10 @@ interface ServerManagerProps {
   onSelectServer: (serverId: string) => void;
   onToggleServer: (server: ServerDto, enabled: boolean) => void;
   onDeleteServer: (server: ServerDto) => void;
+  onImportAllFromComfyUI: () => void;
   onOpenCreate: () => void;
   onOpenEdit: (server: ServerDto) => void;
+  importingComfyUI: boolean;
   modalOpen: boolean;
   modalMode: "add" | "edit";
   form: SaveServerPayload;
@@ -142,7 +144,9 @@ export function ServerManager(props: ServerManagerProps) {
 
   async function handleTestConnection() {
     const url = (props.form.url || "").trim();
-    if (!url) return;
+    if (!url) {
+      return;
+    }
     setTestResult({ state: "testing" });
     try {
       const result = await testServerConnection(url, props.form.auth ?? "");
@@ -159,6 +163,16 @@ export function ServerManager(props: ServerManagerProps) {
           <h2 id="server-manager-title" className="card-title">{props.t("server_manager")}</h2>
         </div>
         <div className="panel-actions">
+          {currentServer ? (
+            <button
+              type="button"
+              className="btn btn-secondary panel-action-btn"
+              onClick={props.onImportAllFromComfyUI}
+              disabled={props.importingComfyUI}
+            >
+              {props.importingComfyUI ? props.t("bulk_import_loading") : props.t("import_all_from_comfyui")}
+            </button>
+          ) : null}
           <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onOpenCreate}>
             {props.t("add_server_toggle")}
           </button>
@@ -297,6 +311,7 @@ export function ServerManager(props: ServerManagerProps) {
               placeholder={props.t("new_server_url_placeholder")}
               autoComplete="off"
             />
+            <p className="form-help">{props.t("server_url_help_comfyui")}</p>
           </div>
           <div className="form-group form-group-full">
             <label htmlFor="modal-server-auth">{props.t("server_auth_label")}</label>
@@ -313,7 +328,7 @@ export function ServerManager(props: ServerManagerProps) {
               <button
                 type="button"
                 className="btn-icon input-toggle-btn"
-                onClick={() => setShowAuth((v) => !v)}
+                onClick={() => setShowAuth((value) => !value)}
                 aria-label={showAuth ? "Hide token" : "Show token"}
                 tabIndex={-1}
               >
@@ -343,7 +358,7 @@ export function ServerManager(props: ServerManagerProps) {
               {testResult.state === "offline" && (
                 <span className="test-result test-result-fail">
                   <StatusDot status="offline" />
-                  {props.t("server_test_fail")}{testResult.message ? ` — ${testResult.message}` : ""}
+                  {props.t("server_test_fail")}{testResult.message ? ` - ${testResult.message}` : ""}
                 </span>
               )}
             </div>

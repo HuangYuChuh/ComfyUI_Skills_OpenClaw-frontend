@@ -45,6 +45,25 @@ export interface RunWorkflowResponseDto {
   };
 }
 
+export interface BulkImportItemDto {
+  workflow_id: string;
+  final_workflow_id: string;
+  source_label: string;
+  status: "created" | "renamed" | "skipped" | "failed";
+  reason: string;
+}
+
+export interface BulkImportReportDto {
+  summary: {
+    created: number;
+    renamed: number;
+    skipped: number;
+    failed: number;
+    total: number;
+  };
+  items: BulkImportItemDto[];
+}
+
 export interface TogglePayload {
   enabled: boolean;
 }
@@ -71,6 +90,11 @@ export interface SaveServerPayload {
 
 export interface WorkflowOrderPayload {
   workflow_ids: string[];
+}
+
+export interface LocalWorkflowImportFilePayload {
+  file_name: string;
+  content: string;
 }
 
 export interface ValidationIssueDto {

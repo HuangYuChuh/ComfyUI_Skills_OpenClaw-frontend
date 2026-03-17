@@ -144,6 +144,67 @@ button:disabled,
   flex: 0 0 192px;
 }
 
+.bulk-import-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.bulk-import-sections {
+  display: grid;
+  gap: 16px;
+}
+
+.bulk-import-section {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  padding: 16px;
+}
+
+.bulk-import-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.bulk-import-item {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px 14px;
+}
+
+.bulk-import-item-main {
+  display: grid;
+  gap: 4px;
+}
+
+.bulk-import-item-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.bulk-import-item-id {
+  font-weight: 600;
+  color: var(--text-main);
+  word-break: break-all;
+}
+
+.bulk-import-item-rename,
+.bulk-import-item-source,
+.bulk-import-item-reason {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
 .mapping-toolbar {
   display: grid;
   gap: 12px;

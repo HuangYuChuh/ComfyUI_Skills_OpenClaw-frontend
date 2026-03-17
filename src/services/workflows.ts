@@ -1,4 +1,6 @@
 import type {
+  BulkImportReportDto,
+  LocalWorkflowImportFilePayload,
   RunWorkflowResponseDto,
   SaveWorkflowPayload,
   TogglePayload,
@@ -47,5 +49,18 @@ export function runWorkflow(serverId: string, workflowId: string, args: Record<s
   return requestJson<RunWorkflowResponseDto>(`/api/servers/${encodeURIComponent(serverId)}/workflow/${encodeURIComponent(workflowId)}/run`, {
     method: "POST",
     body: JSON.stringify({ args }),
+  });
+}
+
+export function importWorkflowsFromComfyUI(serverId: string) {
+  return requestJson<{ status: string; report: BulkImportReportDto }>(`/api/servers/${encodeURIComponent(serverId)}/workflows/import/comfyui`, {
+    method: "POST",
+  });
+}
+
+export function importLocalWorkflows(serverId: string, files: LocalWorkflowImportFilePayload[]) {
+  return requestJson<{ status: string; report: BulkImportReportDto }>(`/api/servers/${encodeURIComponent(serverId)}/workflows/import/local`, {
+    method: "POST",
+    body: JSON.stringify({ files }),
   });
 }
