@@ -17,6 +17,7 @@ interface ServerManagerProps {
   onImportAllFromComfyUI: () => void;
   onOpenCreate: () => void;
   onOpenEdit: (server: ServerDto) => void;
+  bulkImportBusy: boolean;
   importingComfyUI: boolean;
   modalOpen: boolean;
   modalMode: "add" | "edit";
@@ -168,7 +169,7 @@ export function ServerManager(props: ServerManagerProps) {
               type="button"
               className="btn btn-secondary panel-action-btn"
               onClick={props.onImportAllFromComfyUI}
-              disabled={props.importingComfyUI}
+              disabled={props.bulkImportBusy}
             >
               {props.importingComfyUI ? props.t("bulk_import_loading") : props.t("import_all_from_comfyui")}
             </button>

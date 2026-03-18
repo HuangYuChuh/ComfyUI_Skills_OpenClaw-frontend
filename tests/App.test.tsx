@@ -659,6 +659,20 @@ describe("App", () => {
     expect(within(dialog).getByText("broken.json")).toBeInTheDocument();
   });
 
+  it("still shows the import report when refreshing workflows fails after a successful import", async () => {
+    const user = userEvent.setup();
+    listWorkflowsMock
+      .mockResolvedValueOnce({ workflows: [workflowFixture] })
+      .mockRejectedValueOnce(new Error("Failed to load workflow list."));
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: "Import All from ComfyUI" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("ComfyUI Import Report")).toBeInTheDocument();
+    expect(await screen.findByText("Failed to load workflow list.")).toBeInTheDocument();
+  });
+
   it("imports local workflow files and sends file contents to the batch import API", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -691,5 +705,30 @@ describe("App", () => {
 
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("Local Import Report")).toBeInTheDocument();
+  });
+
+  it("disables local import actions while a ComfyUI import is still running", async () => {
+    const user = userEvent.setup();
+    const deferredImport = createDeferred<typeof bulkImportReportFixture>();
+    importWorkflowsFromComfyUIMock.mockReturnValueOnce(
+      deferredImport.promise.then((report) => ({ status: "success", report })),
+    );
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: "Import All from ComfyUI" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Import Local Files" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Import Local Folder" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Importing..." })).toBeDisabled();
+    });
+
+    deferredImport.resolve(bulkImportReportFixture);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Import All from ComfyUI" })).not.toBeDisabled();
+      expect(screen.getByRole("button", { name: "Import Local Files" })).not.toBeDisabled();
+      expect(screen.getByRole("button", { name: "Import Local Folder" })).not.toBeDisabled();
+    });
   });
 });

@@ -71,6 +71,7 @@ function renderWorkflowManager(overrides: Partial<ComponentProps<typeof Workflow
     onToggleWorkflow: vi.fn(),
     onUploadWorkflowVersion: vi.fn(),
     onReorderWorkflows: vi.fn(),
+    bulkImportBusy: false,
     importingLocal: false,
     t,
     ...overrides,

@@ -9,6 +9,7 @@ import { useAppController } from "./app/useAppController";
 
 export default function App() {
   const controller = useAppController();
+  const bulkImportBusy = controller.bulkImportState.loading;
 
   return (
     <>
@@ -56,6 +57,7 @@ export default function App() {
           onToggleWorkflow={controller.handleToggleWorkflow}
           onUploadWorkflowVersion={controller.handleUploadWorkflowVersion}
           onReorderWorkflows={controller.handleReorderWorkflows}
+          bulkImportBusy={bulkImportBusy}
           importingComfyUI={controller.bulkImportState.loading && controller.bulkImportState.source === "comfyui"}
           importingLocal={controller.bulkImportState.loading && controller.bulkImportState.source === "local"}
           t={controller.t}

@@ -34,6 +34,10 @@ function getFilePath(file: File) {
     : "";
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
   const [bulkImportState, setBulkImportState] = useState<BulkImportState>(initialBulkImportState());
   const localImportFilesRef = useRef<HTMLInputElement | null>(null);
@@ -75,7 +79,13 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
   }
 
   async function showReport(source: Exclude<BulkImportSource, null>, report: BulkImportReportDto, requestId: number) {
-    await args.refreshWorkflows();
+    try {
+      await args.refreshWorkflows();
+    } catch (error) {
+      if (isCurrentRequest(requestId)) {
+        args.pushToast("error", getErrorMessage(error, args.t("err_load_workflows")));
+      }
+    }
     if (!isCurrentRequest(requestId)) {
       return;
     }
@@ -115,7 +125,7 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
         return;
       }
       setBulkImportState((current) => ({ ...current, loading: false }));
-      args.pushToast("error", error instanceof Error ? error.message : args.t("err_bulk_import_comfyui"));
+      args.pushToast("error", getErrorMessage(error, args.t("err_bulk_import_comfyui")));
     }
   }
 
@@ -142,7 +152,7 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
         return;
       }
       setBulkImportState((current) => ({ ...current, loading: false }));
-      args.pushToast("error", error instanceof Error ? error.message : args.t("err_bulk_import_local"));
+      args.pushToast("error", getErrorMessage(error, args.t("err_bulk_import_local")));
     }
   }
 

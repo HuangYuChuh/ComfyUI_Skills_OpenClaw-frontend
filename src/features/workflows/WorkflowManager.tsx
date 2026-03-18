@@ -18,6 +18,7 @@ interface WorkflowManagerProps {
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
+  bulkImportBusy: boolean;
   importingLocal: boolean;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
@@ -136,7 +137,7 @@ export function WorkflowManager(props: WorkflowManagerProps) {
             type="button"
             className="btn btn-secondary panel-action-btn"
             onClick={props.onImportLocalFiles}
-            disabled={props.importingLocal}
+            disabled={props.bulkImportBusy}
           >
             {props.importingLocal ? props.t("bulk_import_loading") : props.t("import_local_files")}
           </button>
@@ -144,7 +145,7 @@ export function WorkflowManager(props: WorkflowManagerProps) {
             type="button"
             className="btn btn-secondary panel-action-btn"
             onClick={props.onImportLocalFolder}
-            disabled={props.importingLocal}
+            disabled={props.bulkImportBusy}
           >
             {props.importingLocal ? props.t("bulk_import_loading") : props.t("import_local_folder")}
           </button>

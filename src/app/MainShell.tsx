@@ -39,6 +39,7 @@ interface MainShellProps {
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
+  bulkImportBusy: boolean;
   importingComfyUI: boolean;
   importingLocal: boolean;
   t: TranslateFn;
@@ -85,6 +86,7 @@ export function MainShell(props: MainShellProps) {
         onImportAllFromComfyUI={props.onImportAllFromComfyUI}
         onOpenCreate={props.onOpenCreateServer}
         onOpenEdit={props.onOpenEditServer}
+        bulkImportBusy={props.bulkImportBusy}
         importingComfyUI={props.importingComfyUI}
         modalOpen={props.serverModalOpen}
         modalMode={props.serverModalMode}
@@ -111,6 +113,7 @@ export function MainShell(props: MainShellProps) {
         onToggleWorkflow={props.onToggleWorkflow}
         onUploadWorkflowVersion={props.onUploadWorkflowVersion}
         onReorderWorkflows={props.onReorderWorkflows}
+        bulkImportBusy={props.bulkImportBusy}
         importingLocal={props.importingLocal}
         t={props.t}
       />

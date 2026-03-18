@@ -90,6 +90,7 @@ function Harness({
       onImportAllFromComfyUI={vi.fn()}
       onOpenCreate={vi.fn()}
       onOpenEdit={vi.fn()}
+      bulkImportBusy={false}
       importingComfyUI={false}
       modalOpen
       modalMode={modalMode}
@@ -197,6 +198,7 @@ describe("ServerManager", () => {
         onImportAllFromComfyUI={onImportAllFromComfyUI}
         onOpenCreate={vi.fn()}
         onOpenEdit={vi.fn()}
+        bulkImportBusy={false}
         importingComfyUI={false}
         modalOpen={false}
         modalMode="edit"
