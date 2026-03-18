@@ -16,6 +16,7 @@ import { useConfirmState } from "./useConfirmState";
 import { useServerManagement } from "./useServerManagement";
 import { useToastState } from "./useToastState";
 import { createEditorActions } from "./editorActions";
+import { useBulkWorkflowImport } from "./useBulkWorkflowImport";
 import {
   defaultEditorFilters,
   defaultEditorState,
@@ -24,7 +25,7 @@ import {
 import { createWorkflowActions } from "./workflowActions";
 import { listWorkflows } from "../services/workflows";
 import { buildTransferExport, importTransferBundle, previewTransferExport, previewTransferImport } from "../services/transfer";
-import { checkFrontendUpdate, type UpdateCheckResult } from "../services/update";
+import type { UpdateCheckResult } from "../services/update";
 
 interface TransferState {
   open: boolean;
@@ -116,6 +117,13 @@ export function useAppController() {
     workflowSort,
     editorFilters,
     schemaParams: editorState.schemaParams,
+    t,
+  });
+  const bulkWorkflowImport = useBulkWorkflowImport({
+    currentServer: derived.currentServer,
+    effectiveServerId: derived.effectiveServerId,
+    refreshWorkflows,
+    pushToast,
     t,
   });
 
@@ -448,6 +456,8 @@ export function useAppController() {
     resolveConfirm,
     versionUploadRef,
     transferImportRef,
+    localImportFilesRef: bulkWorkflowImport.localImportFilesRef,
+    localImportFolderRef: bulkWorkflowImport.localImportFolderRef,
     mappingSearchRef,
     viewMode,
     editorState,
@@ -471,6 +481,7 @@ export function useAppController() {
     setEditorState,
     setServerModalOpen: serverManagement.setServerModalOpen,
     transferState,
+    bulkImportState: bulkWorkflowImport.bulkImportState,
     importSections,
     importPreviewSummary,
     handleAddServer: serverManagement.handleAddServer,
@@ -483,6 +494,11 @@ export function useAppController() {
     handleTransferImportFile,
     handleConfirmTransfer,
     closeTransferModal,
+    closeBulkImportModal: bulkWorkflowImport.closeBulkImportModal,
+    handleImportAllFromComfyUI: bulkWorkflowImport.handleImportAllFromComfyUI,
+    handleOpenLocalImportFiles: bulkWorkflowImport.handleOpenLocalImportFiles,
+    handleOpenLocalImportFolder: bulkWorkflowImport.handleOpenLocalImportFolder,
+    handleLocalImportFilesChange: bulkWorkflowImport.handleLocalImportFilesChange,
     toggleTransferServerSelection,
     toggleTransferWorkflowSelection,
     toggleTransferServerExpanded,

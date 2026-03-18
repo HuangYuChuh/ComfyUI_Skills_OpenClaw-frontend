@@ -22,7 +22,7 @@ export default defineConfig(({ command }) => ({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: resolve(__dirname, "src/test/setup.ts"),
+    setupFiles: resolve(__dirname, "tests/setup.ts"),
     css: true,
     testTimeout: 20000,
   },

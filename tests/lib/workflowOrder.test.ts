@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { reorderWorkflowCollection, restoreWorkflowOrder } from "./workflowOrder";
-import type { WorkflowSummaryDto } from "../types/api";
+import { reorderWorkflowCollection, restoreWorkflowOrder } from "../../src/lib/workflowOrder";
+import type { WorkflowSummaryDto } from "../../src/types/api";
 
 const workflows: WorkflowSummaryDto[] = [
   { id: "a", server_id: "s1", server_name: "S1", enabled: true, description: "", updated_at: 1 },

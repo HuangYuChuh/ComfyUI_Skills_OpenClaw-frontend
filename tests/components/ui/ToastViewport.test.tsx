@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ToastViewport } from "./ToastViewport";
+import { ToastViewport } from "../../../src/components/ui/ToastViewport";
 
 describe("ToastViewport", () => {
   it("pauses auto-dismiss while hovered and resumes after leave", () => {

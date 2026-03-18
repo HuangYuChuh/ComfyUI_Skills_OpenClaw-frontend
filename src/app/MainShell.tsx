@@ -20,6 +20,7 @@ interface MainShellProps {
   onSelectServer: (serverId: string) => void;
   onToggleServer: (server: ServerDto, enabled: boolean) => void;
   onDeleteServer: (server: ServerDto) => void;
+  onImportAllFromComfyUI: () => void;
   onOpenTransferExport: () => void;
   onOpenTransferImport: () => void;
   onOpenCreateServer: () => void;
@@ -31,11 +32,16 @@ interface MainShellProps {
   onWorkflowSortChange: (value: string) => void;
   onCreateWorkflow: () => void;
   onCreateWorkflowFromFile: (file: File | null) => void;
+  onImportLocalFiles: () => void;
+  onImportLocalFolder: () => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
   onDeleteWorkflow: (workflow: WorkflowSummaryDto) => void;
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
+  bulkImportBusy: boolean;
+  importingComfyUI: boolean;
+  importingLocal: boolean;
   t: TranslateFn;
 }
 
@@ -77,8 +83,11 @@ export function MainShell(props: MainShellProps) {
         onSelectServer={props.onSelectServer}
         onToggleServer={props.onToggleServer}
         onDeleteServer={props.onDeleteServer}
+        onImportAllFromComfyUI={props.onImportAllFromComfyUI}
         onOpenCreate={props.onOpenCreateServer}
         onOpenEdit={props.onOpenEditServer}
+        bulkImportBusy={props.bulkImportBusy}
+        importingComfyUI={props.importingComfyUI}
         modalOpen={props.serverModalOpen}
         modalMode={props.serverModalMode}
         form={props.serverForm}
@@ -97,11 +106,15 @@ export function MainShell(props: MainShellProps) {
         onSortChange={props.onWorkflowSortChange}
         onCreateWorkflow={props.onCreateWorkflow}
         onCreateWorkflowFromFile={props.onCreateWorkflowFromFile}
+        onImportLocalFiles={props.onImportLocalFiles}
+        onImportLocalFolder={props.onImportLocalFolder}
         onEditWorkflow={props.onEditWorkflow}
         onDeleteWorkflow={props.onDeleteWorkflow}
         onToggleWorkflow={props.onToggleWorkflow}
         onUploadWorkflowVersion={props.onUploadWorkflowVersion}
         onReorderWorkflows={props.onReorderWorkflows}
+        bulkImportBusy={props.bulkImportBusy}
+        importingLocal={props.importingLocal}
         t={props.t}
       />
     </main>

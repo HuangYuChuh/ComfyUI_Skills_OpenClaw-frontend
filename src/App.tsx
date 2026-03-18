@@ -3,11 +3,13 @@ import { ToastViewport } from "./components/ui/ToastViewport";
 import { UpdateBanner } from "./components/ui/UpdateBanner";
 import { EditorView } from "./features/editor/EditorView";
 import { TransferModal } from "./features/transfer/TransferModal";
+import { BulkImportReportModal } from "./features/workflows/BulkImportReportModal";
 import { MainShell } from "./app/MainShell";
 import { useAppController } from "./app/useAppController";
 
 export default function App() {
   const controller = useAppController();
+  const bulkImportBusy = controller.bulkImportState.loading;
 
   return (
     <>
@@ -36,6 +38,7 @@ export default function App() {
           onSelectServer={controller.setCurrentServerId}
           onToggleServer={controller.handleToggleServer}
           onDeleteServer={controller.requestDeleteServer}
+          onImportAllFromComfyUI={controller.handleImportAllFromComfyUI}
           onOpenTransferExport={controller.handleOpenTransferExport}
           onOpenTransferImport={controller.handleOpenTransferImport}
           onOpenCreateServer={controller.handleAddServer}
@@ -47,11 +50,16 @@ export default function App() {
           onWorkflowSortChange={controller.setWorkflowSort}
           onCreateWorkflow={controller.createWorkflow}
           onCreateWorkflowFromFile={controller.createWorkflowFromFile}
+          onImportLocalFiles={controller.handleOpenLocalImportFiles}
+          onImportLocalFolder={controller.handleOpenLocalImportFolder}
           onEditWorkflow={controller.handleEditWorkflow}
           onDeleteWorkflow={controller.handleDeleteWorkflow}
           onToggleWorkflow={controller.handleToggleWorkflow}
           onUploadWorkflowVersion={controller.handleUploadWorkflowVersion}
           onReorderWorkflows={controller.handleReorderWorkflows}
+          bulkImportBusy={bulkImportBusy}
+          importingComfyUI={controller.bulkImportState.loading && controller.bulkImportState.source === "comfyui"}
+          importingLocal={controller.bulkImportState.loading && controller.bulkImportState.source === "local"}
           t={controller.t}
         />
       ) : (
@@ -144,6 +152,14 @@ export default function App() {
         t={controller.t}
       />
 
+      <BulkImportReportModal
+        open={controller.bulkImportState.open}
+        report={controller.bulkImportState.report}
+        source={controller.bulkImportState.source}
+        onClose={controller.closeBulkImportModal}
+        t={controller.t}
+      />
+
       <input
         ref={controller.versionUploadRef}
         type="file"
@@ -162,6 +178,31 @@ export default function App() {
         className="sr-only"
         onChange={(event) => {
           controller.handleTransferImportFile(event.target.files?.[0] || null);
+          event.currentTarget.value = "";
+        }}
+      />
+      <input
+        id="bulk-import-files"
+        ref={controller.localImportFilesRef}
+        type="file"
+        accept=".json,application/json"
+        multiple
+        className="sr-only"
+        onChange={(event) => {
+          controller.handleLocalImportFilesChange(event.target.files);
+          event.currentTarget.value = "";
+        }}
+      />
+      <input
+        id="bulk-import-folder"
+        ref={controller.localImportFolderRef}
+        type="file"
+        accept=".json,application/json"
+        multiple
+        className="sr-only"
+        {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+        onChange={(event) => {
+          controller.handleLocalImportFilesChange(event.target.files);
           event.currentTarget.value = "";
         }}
       />
