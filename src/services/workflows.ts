@@ -1,5 +1,7 @@
 import type {
   BulkImportReportDto,
+  ExecutionHistoryDetailDto,
+  ExecutionHistorySummaryDto,
   LocalWorkflowImportFilePayload,
   RunWorkflowResponseDto,
   SaveWorkflowPayload,
@@ -50,6 +52,32 @@ export function runWorkflow(serverId: string, workflowId: string, args: Record<s
     method: "POST",
     body: JSON.stringify({ args }),
   });
+}
+
+export function listWorkflowHistory(serverId: string, workflowId: string) {
+  return requestJson<{ history: ExecutionHistorySummaryDto[] }>(
+    `/api/servers/${encodeURIComponent(serverId)}/workflow/${encodeURIComponent(workflowId)}/history`,
+  );
+}
+
+export function getWorkflowHistoryEntry(serverId: string, workflowId: string, runId: string) {
+  return requestJson<ExecutionHistoryDetailDto>(
+    `/api/servers/${encodeURIComponent(serverId)}/workflow/${encodeURIComponent(workflowId)}/history/${encodeURIComponent(runId)}`,
+  );
+}
+
+export function deleteWorkflowHistoryEntry(serverId: string, workflowId: string, runId: string) {
+  return requestJson<{ status: string }>(
+    `/api/servers/${encodeURIComponent(serverId)}/workflow/${encodeURIComponent(workflowId)}/history/${encodeURIComponent(runId)}`,
+    { method: "DELETE" },
+  );
+}
+
+export function clearWorkflowHistory(serverId: string, workflowId: string) {
+  return requestJson<{ status: string; deleted: number }>(
+    `/api/servers/${encodeURIComponent(serverId)}/workflow/${encodeURIComponent(workflowId)}/history`,
+    { method: "DELETE" },
+  );
 }
 
 export function importWorkflowsFromComfyUI(serverId: string) {

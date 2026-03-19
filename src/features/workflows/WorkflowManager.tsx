@@ -14,6 +14,8 @@ interface WorkflowManagerProps {
   onImportLocalFiles: () => void;
   onImportLocalFolder: () => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
+  onRunWorkflow: (workflow: WorkflowSummaryDto) => void;
+  onOpenWorkflowHistory: (workflow: WorkflowSummaryDto) => void;
   onDeleteWorkflow: (workflow: WorkflowSummaryDto) => void;
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
@@ -298,6 +300,30 @@ export function WorkflowManager(props: WorkflowManagerProps) {
                   </div>
                 </label>
               </div>
+
+              <button
+                type="button"
+                className="btn btn-secondary workflow-inline-btn"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  props.onRunWorkflow(workflow);
+                }}
+              >
+                {props.t("run_workflow_short")}
+              </button>
+
+              {workflow.has_history ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary workflow-inline-btn"
+                  onClick={() => {
+                    setOpenMenuId(null);
+                    props.onOpenWorkflowHistory(workflow);
+                  }}
+                >
+                  {props.t("workflow_history_short")}
+                </button>
+              ) : null}
 
               <button
                 type="button"

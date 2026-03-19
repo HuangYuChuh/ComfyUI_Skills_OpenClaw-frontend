@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { normalizeLanguage, translate, type Language } from "../i18n";
 import { safeReadLocalStorage } from "../lib/storage";
 import type {
+  ExecutionHistoryDetailDto,
+  ExecutionHistorySummaryDto,
   TransferExportPreviewDto,
   TransferImportPreviewDto,
   TransferPlanItemDto,
@@ -23,9 +25,18 @@ import {
   type ViewMode,
 } from "./state";
 import { createWorkflowActions } from "./workflowActions";
-import { listWorkflows } from "../services/workflows";
+import {
+  clearWorkflowHistory,
+  deleteWorkflowHistoryEntry,
+  getWorkflowDetail,
+  getWorkflowHistoryEntry,
+  listWorkflowHistory,
+  listWorkflows,
+  runWorkflow,
+} from "../services/workflows";
 import { buildTransferExport, importTransferBundle, previewTransferExport, previewTransferImport } from "../services/transfer";
 import type { UpdateCheckResult } from "../services/update";
+import type { RunWorkflowParam } from "../features/workflows/RunWorkflowModal";
 
 interface TransferState {
   open: boolean;
@@ -37,6 +48,26 @@ interface TransferState {
   importBundle: Record<string, unknown> | null;
   applyEnvironment: boolean;
   loading: boolean;
+}
+
+interface RunWorkflowState {
+  open: boolean;
+  workflow: WorkflowSummaryDto | null;
+  schema: Record<string, RunWorkflowParam>;
+  values: Record<string, unknown>;
+  loading: boolean;
+  submitting: boolean;
+  result: { status?: string; run_id?: string; prompt_id?: string; images?: string[]; error?: string } | null;
+}
+
+interface WorkflowHistoryState {
+  open: boolean;
+  workflow: WorkflowSummaryDto | null;
+  items: ExecutionHistorySummaryDto[];
+  selectedRunId: string | null;
+  detail: ExecutionHistoryDetailDto | null;
+  loading: boolean;
+  detailLoading: boolean;
 }
 
 function initialTransferState(): TransferState {
@@ -83,6 +114,51 @@ function getTransferValidationMessages(detail: unknown): string[] {
     .filter((item): item is string => typeof item === "string" && Boolean(item));
 }
 
+function initialRunWorkflowState(): RunWorkflowState {
+  return {
+    open: false,
+    workflow: null,
+    schema: {},
+    values: {},
+    loading: false,
+    submitting: false,
+    result: null,
+  };
+}
+
+function initialWorkflowHistoryState(): WorkflowHistoryState {
+  return {
+    open: false,
+    workflow: null,
+    items: [],
+    selectedRunId: null,
+    detail: null,
+    loading: false,
+    detailLoading: false,
+  };
+}
+
+function normalizeRunSchema(detail: WorkflowDetailDto): Record<string, RunWorkflowParam> {
+  const raw = detail.run_schema_params && Object.keys(detail.run_schema_params).length > 0
+    ? detail.run_schema_params
+    : detail.schema_params;
+
+  const entries = Object.entries(raw || {}).filter(([, value]) => value && typeof value === "object");
+  return Object.fromEntries(entries.map(([key, value]) => [key, value as RunWorkflowParam]));
+}
+
+function buildRunWorkflowDefaults(schema: Record<string, RunWorkflowParam>) {
+  const values: Record<string, unknown> = {};
+  Object.entries(schema).forEach(([key, param]) => {
+    if (param.type === "boolean") {
+      values[key] = Boolean(param.default ?? false);
+      return;
+    }
+    values[key] = param.default ?? "";
+  });
+  return values;
+}
+
 export function useAppController() {
   const [language, setLanguage] = useState<Language>(() => normalizeLanguage(safeReadLocalStorage("ui-lang")));
   const [workflows, setWorkflows] = useState<WorkflowSummaryDto[]>([]);
@@ -96,6 +172,8 @@ export function useAppController() {
   const [lastAutoWorkflowId, setLastAutoWorkflowId] = useState("");
   const [transferState, setTransferState] = useState<TransferState>(initialTransferState());
   const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null);
+  const [runModalState, setRunModalState] = useState<RunWorkflowState>(initialRunWorkflowState());
+  const [historyState, setHistoryState] = useState<WorkflowHistoryState>(initialWorkflowHistoryState());
 
   const versionUploadRef = useRef<HTMLInputElement | null>(null);
   const transferImportRef = useRef<HTMLInputElement | null>(null);
@@ -425,6 +503,188 @@ export function useAppController() {
     setUpdateInfo(null);
   }
 
+  async function handleOpenRunWorkflow(workflow: WorkflowSummaryDto) {
+    setRunModalState((current) => ({
+      ...current,
+      open: true,
+      workflow,
+      loading: true,
+      result: null,
+    }));
+    try {
+      const detail = await getWorkflowDetail(workflow.server_id, workflow.id);
+      const schema = normalizeRunSchema(detail);
+      setRunModalState({
+        open: true,
+        workflow,
+        schema,
+        values: buildRunWorkflowDefaults(schema),
+        loading: false,
+        submitting: false,
+        result: null,
+      });
+    } catch (error) {
+      setRunModalState(initialRunWorkflowState());
+      pushToast("error", error instanceof Error ? error.message : t("err_load_saved_wf"));
+    }
+  }
+
+  function closeRunWorkflowModal() {
+    setRunModalState(initialRunWorkflowState());
+  }
+
+  function updateRunWorkflowValue(key: string, value: unknown) {
+    setRunModalState((current) => ({
+      ...current,
+      values: {
+        ...current.values,
+        [key]: value,
+      },
+    }));
+  }
+
+  async function handleRunWorkflow() {
+    const workflow = runModalState.workflow;
+    if (!workflow) {
+      return;
+    }
+
+    const payload: Record<string, unknown> = {};
+    Object.entries(runModalState.values).forEach(([key, value]) => {
+      const param = runModalState.schema[key];
+      if ((param?.type === "int" || param?.type === "float") && value === "") {
+        return;
+      }
+      payload[key] = value;
+    });
+
+    setRunModalState((current) => ({ ...current, submitting: true, result: null }));
+    try {
+      const response = await runWorkflow(workflow.server_id, workflow.id, payload);
+      setRunModalState((current) => ({
+        ...current,
+        submitting: false,
+        result: response.result,
+      }));
+      if (response.result.status === "success") {
+        pushToast("success", t("run_workflow_success", { id: workflow.id }));
+      } else {
+        pushToast("error", response.result.error || t("run_workflow_error"));
+      }
+    } catch (error) {
+      setRunModalState((current) => ({ ...current, submitting: false }));
+      pushToast("error", error instanceof Error ? error.message : t("run_workflow_error"));
+    }
+  }
+
+  async function loadWorkflowHistory(workflow: WorkflowSummaryDto, selectedRunId?: string | null) {
+    setHistoryState((current) => ({
+      ...current,
+      open: true,
+      workflow,
+      loading: true,
+      detailLoading: false,
+      detail: selectedRunId ? current.detail : null,
+    }));
+    try {
+      const response = await listWorkflowHistory(workflow.server_id, workflow.id);
+      const nextSelectedRunId = selectedRunId ?? response.history[0]?.run_id ?? null;
+      setHistoryState({
+        open: true,
+        workflow,
+        items: response.history,
+        selectedRunId: nextSelectedRunId,
+        detail: null,
+        loading: false,
+        detailLoading: Boolean(nextSelectedRunId),
+      });
+      if (nextSelectedRunId) {
+        const detail = await getWorkflowHistoryEntry(workflow.server_id, workflow.id, nextSelectedRunId);
+        setHistoryState((current) => ({
+          ...current,
+          detail,
+          detailLoading: false,
+        }));
+      }
+    } catch (error) {
+      setHistoryState(initialWorkflowHistoryState());
+      pushToast("error", error instanceof Error ? error.message : t("workflow_history_load_error"));
+    }
+  }
+
+  async function handleOpenWorkflowHistory(workflow: WorkflowSummaryDto) {
+    await loadWorkflowHistory(workflow);
+  }
+
+  function closeWorkflowHistoryModal() {
+    setHistoryState(initialWorkflowHistoryState());
+  }
+
+  async function refreshWorkflowHistory() {
+    if (!historyState.workflow) {
+      return;
+    }
+    await loadWorkflowHistory(historyState.workflow, historyState.selectedRunId);
+  }
+
+  async function handleSelectWorkflowHistoryEntry(runId: string) {
+    if (!historyState.workflow) {
+      return;
+    }
+    setHistoryState((current) => ({ ...current, selectedRunId: runId, detailLoading: true }));
+    try {
+      const detail = await getWorkflowHistoryEntry(historyState.workflow.server_id, historyState.workflow.id, runId);
+      setHistoryState((current) => ({ ...current, detail, detailLoading: false }));
+    } catch (error) {
+      setHistoryState((current) => ({ ...current, detailLoading: false }));
+      pushToast("error", error instanceof Error ? error.message : t("workflow_history_load_error"));
+    }
+  }
+
+  async function handleDeleteWorkflowHistoryEntry(runId: string) {
+    if (!historyState.workflow) {
+      return;
+    }
+    if (!(await confirm({
+      title: t("confirm_action_title"),
+      message: t("workflow_history_delete_confirm"),
+      confirmLabel: t("delete"),
+      cancelLabel: t("cancel"),
+      tone: "danger",
+    }))) {
+      return;
+    }
+    try {
+      await deleteWorkflowHistoryEntry(historyState.workflow.server_id, historyState.workflow.id, runId);
+      await loadWorkflowHistory(historyState.workflow);
+      pushToast("success", t("workflow_history_delete_success"));
+    } catch (error) {
+      pushToast("error", error instanceof Error ? error.message : t("workflow_history_delete_error"));
+    }
+  }
+
+  async function handleClearWorkflowHistory() {
+    if (!historyState.workflow) {
+      return;
+    }
+    if (!(await confirm({
+      title: t("confirm_action_title"),
+      message: t("workflow_history_clear_confirm", { id: historyState.workflow.id }),
+      confirmLabel: t("workflow_history_clear"),
+      cancelLabel: t("cancel"),
+      tone: "danger",
+    }))) {
+      return;
+    }
+    try {
+      await clearWorkflowHistory(historyState.workflow.server_id, historyState.workflow.id);
+      await loadWorkflowHistory(historyState.workflow, null);
+      pushToast("success", t("workflow_history_clear_success"));
+    } catch (error) {
+      pushToast("error", error instanceof Error ? error.message : t("workflow_history_clear_error"));
+    }
+  }
+
   useAppEffects({
     language,
     toasts,
@@ -503,6 +763,18 @@ export function useAppController() {
     toggleTransferWorkflowSelection,
     toggleTransferServerExpanded,
     setTransferState,
+    runModalState,
+    historyState,
+    handleOpenRunWorkflow,
+    closeRunWorkflowModal,
+    updateRunWorkflowValue,
+    handleRunWorkflow,
+    handleOpenWorkflowHistory,
+    closeWorkflowHistoryModal,
+    refreshWorkflowHistory,
+    handleSelectWorkflowHistoryEntry,
+    handleDeleteWorkflowHistoryEntry,
+    handleClearWorkflowHistory,
     handleBackFromEditor: editorActions.handleBackFromEditor,
     handleEditorUpload: editorActions.handleEditorUpload,
     createWorkflowFromFile: editorActions.createWorkflowFromFile,
