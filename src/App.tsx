@@ -4,6 +4,8 @@ import { UpdateBanner } from "./components/ui/UpdateBanner";
 import { EditorView } from "./features/editor/EditorView";
 import { TransferModal } from "./features/transfer/TransferModal";
 import { BulkImportReportModal } from "./features/workflows/BulkImportReportModal";
+import { RunWorkflowModal } from "./features/workflows/RunWorkflowModal";
+import { WorkflowHistoryModal } from "./features/workflows/WorkflowHistoryModal";
 import { MainShell } from "./app/MainShell";
 import { useAppController } from "./app/useAppController";
 
@@ -53,6 +55,8 @@ export default function App() {
           onImportLocalFiles={controller.handleOpenLocalImportFiles}
           onImportLocalFolder={controller.handleOpenLocalImportFolder}
           onEditWorkflow={controller.handleEditWorkflow}
+          onRunWorkflow={controller.handleOpenRunWorkflow}
+          onOpenWorkflowHistory={controller.handleOpenWorkflowHistory}
           onDeleteWorkflow={controller.handleDeleteWorkflow}
           onToggleWorkflow={controller.handleToggleWorkflow}
           onUploadWorkflowVersion={controller.handleUploadWorkflowVersion}
@@ -157,6 +161,36 @@ export default function App() {
         report={controller.bulkImportState.report}
         source={controller.bulkImportState.source}
         onClose={controller.closeBulkImportModal}
+        t={controller.t}
+      />
+
+      <RunWorkflowModal
+        open={controller.runModalState.open}
+        workflowId={controller.runModalState.workflow?.id || ""}
+        schema={controller.runModalState.schema}
+        values={controller.runModalState.values}
+        loading={controller.runModalState.loading}
+        submitting={controller.runModalState.submitting}
+        result={controller.runModalState.result}
+        onClose={controller.closeRunWorkflowModal}
+        onChange={controller.updateRunWorkflowValue}
+        onSubmit={controller.handleRunWorkflow}
+        t={controller.t}
+      />
+
+      <WorkflowHistoryModal
+        open={controller.historyState.open}
+        workflowId={controller.historyState.workflow?.id || ""}
+        loading={controller.historyState.loading}
+        detailLoading={controller.historyState.detailLoading}
+        history={controller.historyState.items}
+        selectedRunId={controller.historyState.selectedRunId}
+        detail={controller.historyState.detail}
+        onClose={controller.closeWorkflowHistoryModal}
+        onRefresh={controller.refreshWorkflowHistory}
+        onSelectRun={controller.handleSelectWorkflowHistoryEntry}
+        onDeleteRun={controller.handleDeleteWorkflowHistoryEntry}
+        onClear={controller.handleClearWorkflowHistory}
         t={controller.t}
       />
 

@@ -35,6 +35,8 @@ interface MainShellProps {
   onImportLocalFiles: () => void;
   onImportLocalFolder: () => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
+  onRunWorkflow: (workflow: WorkflowSummaryDto) => void;
+  onOpenWorkflowHistory: (workflow: WorkflowSummaryDto) => void;
   onDeleteWorkflow: (workflow: WorkflowSummaryDto) => void;
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
@@ -109,6 +111,8 @@ export function MainShell(props: MainShellProps) {
         onImportLocalFiles={props.onImportLocalFiles}
         onImportLocalFolder={props.onImportLocalFolder}
         onEditWorkflow={props.onEditWorkflow}
+        onRunWorkflow={props.onRunWorkflow}
+        onOpenWorkflowHistory={props.onOpenWorkflowHistory}
         onDeleteWorkflow={props.onDeleteWorkflow}
         onToggleWorkflow={props.onToggleWorkflow}
         onUploadWorkflowVersion={props.onUploadWorkflowVersion}

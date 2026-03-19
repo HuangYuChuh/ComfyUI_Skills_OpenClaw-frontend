@@ -364,6 +364,16 @@
   .modal-actions {
     flex-direction: column-reverse;
   }
+
+  .workflow-actions,
+  .workflow-history-layout {
+    flex-wrap: wrap;
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-inline-btn {
+    flex: 1 1 calc(50% - 6px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

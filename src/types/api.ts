@@ -20,6 +20,7 @@ export interface WorkflowSummaryDto {
   origin?: string;
   source_label?: string;
   tags?: string[];
+  has_history?: boolean;
 }
 
 export interface WorkflowDetailDto {
@@ -29,6 +30,7 @@ export interface WorkflowDetailDto {
   enabled: boolean;
   workflow_data: Record<string, unknown>;
   schema_params: Record<string, unknown>;
+  run_schema_params?: Record<string, unknown>;
   origin?: string;
   source_label?: string;
   tags?: string[];
@@ -39,10 +41,52 @@ export interface RunWorkflowResponseDto {
   result: {
     status?: string;
     server?: string;
+    workflow_id?: string;
+    run_id?: string;
     prompt_id?: string;
     images?: string[];
     error?: string;
   };
+}
+
+export interface ExecutionHistorySummaryDto {
+  run_id: string;
+  server_id: string;
+  workflow_id: string;
+  status: string;
+  created_at: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  duration_ms?: number | null;
+  prompt_id?: string | null;
+  raw_args: Record<string, unknown>;
+  resolved_args: Record<string, unknown>;
+  image_count: number;
+  images: string[];
+  error_message?: string;
+}
+
+export interface ExecutionHistoryDetailDto {
+  run_id: string;
+  server_id: string;
+  workflow_id: string;
+  status: string;
+  created_at: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  duration_ms?: number | null;
+  prompt_id?: string | null;
+  raw_args: Record<string, unknown>;
+  resolved_args: Record<string, unknown>;
+  workflow_snapshot?: Record<string, unknown>;
+  schema_snapshot?: Record<string, unknown>;
+  result?: {
+    images?: string[];
+    image_count?: number;
+  } | null;
+  error?: {
+    message?: string;
+  } | null;
 }
 
 export interface BulkImportItemDto {

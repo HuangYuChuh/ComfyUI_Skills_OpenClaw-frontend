@@ -6,7 +6,7 @@ interface ModalProps extends PropsWithChildren {
   title: ReactNode;
   onClose: () => void;
   actions?: ReactNode;
-  width?: "normal" | "wide";
+  width?: "normal" | "wide" | "xwide";
   initialFocusRef?: RefObject<HTMLElement | null>;
 }
 
@@ -66,7 +66,12 @@ export function Modal({ open, title, onClose, actions, width = "normal", initial
       }
     }}
     >
-      <div ref={cardRef} className={`modal-card ${width === "wide" ? "modal-card-wide" : ""}`} role="dialog" aria-modal="true">
+      <div
+        ref={cardRef}
+        className={`modal-card ${width === "wide" ? "modal-card-wide" : ""} ${width === "xwide" ? "modal-card-xwide" : ""}`}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="modal-header">
           <h3 className="card-title">{title}</h3>
         </div>
