@@ -555,7 +555,15 @@ export function useAppController() {
       if ((param?.type === "int" || param?.type === "float") && value === "") {
         return;
       }
-      payload[key] = value;
+      if (param?.type === "int") {
+        payload[key] = parseInt(String(value), 10);
+      } else if (param?.type === "float") {
+        payload[key] = parseFloat(String(value));
+      } else if (param?.type === "boolean") {
+        payload[key] = value === true || value === "true";
+      } else {
+        payload[key] = value;
+      }
     });
 
     setRunModalState((current) => ({ ...current, submitting: true, result: null }));
@@ -636,7 +644,7 @@ export function useAppController() {
       const detail = await getWorkflowHistoryEntry(historyState.workflow.server_id, historyState.workflow.id, runId);
       setHistoryState((current) => ({ ...current, detail, detailLoading: false }));
     } catch (error) {
-      setHistoryState((current) => ({ ...current, detailLoading: false }));
+      setHistoryState((current) => ({ ...current, detail: null, detailLoading: false }));
       pushToast("error", error instanceof Error ? error.message : t("workflow_history_load_error"));
     }
   }

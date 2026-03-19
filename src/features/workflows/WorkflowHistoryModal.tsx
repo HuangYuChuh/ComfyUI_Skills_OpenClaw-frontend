@@ -73,10 +73,10 @@ function buildHistoryImageUrl(serverId: string, workflowId: string, runId: strin
 }
 
 function getImageUrls(detail: ExecutionHistoryDetailDto | null) {
-  const images = Array.isArray(detail?.result?.images) ? detail?.result?.images : [];
   if (!detail) {
     return [];
   }
+  const images = Array.isArray(detail.result?.images) ? detail.result.images : [];
   return images.map((_, index) => buildHistoryImageUrl(detail.server_id, detail.workflow_id, detail.run_id, index));
 }
 
