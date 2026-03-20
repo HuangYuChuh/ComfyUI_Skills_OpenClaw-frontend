@@ -59,8 +59,10 @@ export function createWorkflowActions(args: CreateWorkflowActionsArgs) {
   async function handleEditWorkflow(workflow: WorkflowSummaryDto) {
     try {
       await args.openEditor(await getWorkflowDetail(workflow.server_id, workflow.id));
+      return true;
     } catch (error) {
       args.pushToast("error", error instanceof Error ? error.message : args.t("err_load_saved_wf"));
+      return false;
     }
   }
 

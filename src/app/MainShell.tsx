@@ -1,13 +1,9 @@
-import { CustomSelect } from "../components/ui/CustomSelect";
 import { ServerManager } from "../features/servers/ServerManager";
 import { WorkflowManager } from "../features/workflows/WorkflowManager";
 import type { SaveServerPayload, ServerDto, WorkflowSummaryDto } from "../types/api";
-import type { Language } from "../i18n";
 import type { ServerModalMode, TranslateFn } from "./state";
 
 interface MainShellProps {
-  language: Language;
-  setLanguage: (language: Language) => void;
   servers: ServerDto[];
   currentServer: ServerDto | null;
   visibleWorkflows: WorkflowSummaryDto[];
@@ -21,8 +17,6 @@ interface MainShellProps {
   onToggleServer: (server: ServerDto, enabled: boolean) => void;
   onDeleteServer: (server: ServerDto) => void;
   onImportAllFromComfyUI: () => void;
-  onOpenTransferExport: () => void;
-  onOpenTransferImport: () => void;
   onOpenCreateServer: () => void;
   onOpenEditServer: (server: ServerDto) => void;
   onServerFormChange: (next: SaveServerPayload) => void;
@@ -49,36 +43,7 @@ interface MainShellProps {
 
 export function MainShell(props: MainShellProps) {
   return (
-    <main className="page shell">
-      <header className="page-header">
-        <div className="logo-frame" aria-hidden="true">
-          <img className="logo-image" src={`${import.meta.env.BASE_URL}logo.png`} alt="ComfyUI OpenClaw logo" />
-        </div>
-        <div className="page-title-group">
-          <h1>{props.t("title")}</h1>
-          <p className="subtitle">{props.t("subtitle")}</p>
-        </div>
-        <div className="page-header-actions">
-          <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onOpenTransferExport}>
-            {props.t("export_bundle")}
-          </button>
-          <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onOpenTransferImport}>
-            {props.t("import_bundle")}
-          </button>
-        </div>
-        <CustomSelect
-          value={props.language}
-          options={[
-            { value: "en", label: "English" },
-            { value: "zh", label: "简体中文" },
-            { value: "zh_hant", label: "繁體中文" },
-          ]}
-          onChange={(value) => props.setLanguage(value as Language)}
-          ariaLabel="Language selector"
-          className="is-lang-select"
-        />
-      </header>
-
+    <>
       <ServerManager
         servers={props.servers}
         currentServerId={props.currentServer?.id || null}
@@ -121,6 +86,6 @@ export function MainShell(props: MainShellProps) {
         importingLocal={props.importingLocal}
         t={props.t}
       />
-    </main>
+    </>
   );
 }

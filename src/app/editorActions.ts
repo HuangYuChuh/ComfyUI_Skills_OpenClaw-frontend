@@ -6,7 +6,7 @@ import type { WorkflowDetailDto } from "../types/api";
 import { applyRecommendedExposureSet } from "./editorUtils";
 import { persistWorkflow } from "./workflowPersistence";
 import { defaultEditorState } from "./state";
-import type { TranslateFn, ViewMode } from "./state";
+import type { TranslateFn } from "./state";
 import type { MappingNodeGroup } from "../features/editor/types";
 
 interface ConfirmOptions {
@@ -30,7 +30,6 @@ interface CreateEditorActionsArgs {
   confirm: (options: ConfirmOptions) => Promise<boolean>;
   refreshWorkflows: () => Promise<void>;
   pushToast: (type: "success" | "error" | "info", message: string) => void;
-  setViewMode: Dispatch<SetStateAction<ViewMode>>;
   resetEditor: () => void;
   resetEditorUiState: () => void;
   t: TranslateFn;
@@ -53,10 +52,10 @@ export function createEditorActions(args: CreateEditorActionsArgs) {
 
   async function handleBackFromEditor() {
     if (!(await ensureCanLeaveEditor())) {
-      return;
+      return false;
     }
     args.resetEditor();
-    args.setViewMode("main");
+    return true;
   }
 
   async function handleVersionFileChange(file: File | null) {
@@ -70,7 +69,6 @@ export function createEditorActions(args: CreateEditorActionsArgs) {
       const nextEditorState = buildVersionUpgradeState(target, await file.text());
       args.setEditorState(nextEditorState);
       args.resetEditorUiState();
-      args.setViewMode("editor");
       args.pushToast("success", args.t("workflow_upgrade_summary", {
         retained: nextEditorState.upgradeSummary?.retained || 0,
         review: nextEditorState.upgradeSummary?.review || 0,
@@ -117,15 +115,15 @@ export function createEditorActions(args: CreateEditorActionsArgs) {
 
   async function createWorkflowFromFile(file: File | null) {
     if (!file) {
-      return;
+      return false;
     }
     if (args.currentServer?.unsupported) {
       args.pushToast("info", args.t("server_unsupported_reason", { type: args.currentServer.server_type || "unknown" }));
-      return;
+      return false;
     }
     if (!args.effectiveServerId) {
       args.pushToast("error", args.t("err_select_server_before_register"));
-      return;
+      return false;
     }
 
     try {
@@ -141,11 +139,12 @@ export function createEditorActions(args: CreateEditorActionsArgs) {
         hasUnsavedChanges: true,
       });
       args.setLastAutoWorkflowId(suggestedWorkflowId);
-      args.setViewMode("editor");
       args.pushToast("success", args.t("ok_wf_load"));
+      return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : args.t("err_invalid_json");
       args.pushToast("error", message.includes("editor workflow") ? args.t("err_ui_workflow_format") : message);
+      return false;
     }
   }
 
@@ -235,14 +234,14 @@ export function createEditorActions(args: CreateEditorActionsArgs) {
   function createWorkflow() {
     if (args.currentServer?.unsupported) {
       args.pushToast("info", args.t("server_unsupported_reason", { type: args.currentServer.server_type || "unknown" }));
-      return;
+      return false;
     }
     if (!args.effectiveServerId) {
       args.pushToast("error", args.t("err_select_server_before_register"));
-      return;
+      return false;
     }
     args.resetEditor();
-    args.setViewMode("editor");
+    return true;
   }
 
   return {

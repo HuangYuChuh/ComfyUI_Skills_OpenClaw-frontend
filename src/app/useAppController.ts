@@ -22,7 +22,6 @@ import { useBulkWorkflowImport } from "./useBulkWorkflowImport";
 import {
   defaultEditorFilters,
   defaultEditorState,
-  type ViewMode,
 } from "./state";
 import { createWorkflowActions } from "./workflowActions";
 import {
@@ -159,10 +158,9 @@ function buildRunWorkflowDefaults(schema: Record<string, RunWorkflowParam>) {
   return values;
 }
 
-export function useAppController() {
+export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) {
   const [language, setLanguage] = useState<Language>(() => normalizeLanguage(safeReadLocalStorage("ui-lang")));
   const [workflows, setWorkflows] = useState<WorkflowSummaryDto[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>("main");
   const [editorState, setEditorState] = useState(defaultEditorState());
   const [editorFilters, setEditorFilters] = useState(defaultEditorFilters());
   const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
@@ -220,7 +218,6 @@ export function useAppController() {
   async function openEditor(detail?: WorkflowDetailDto) {
     resetEditorUiState();
     setEditorState(detail ? buildEditorStateFromDetail(detail) : defaultEditorState());
-    setViewMode("editor");
   }
 
   async function refreshWorkflows() {
@@ -477,7 +474,6 @@ export function useAppController() {
     confirm,
     refreshWorkflows,
     pushToast,
-    setViewMode,
     resetEditor,
     resetEditorUiState,
     t,
@@ -702,7 +698,7 @@ export function useAppController() {
     pushToast,
     setUpdateInfo,
     t,
-    viewMode,
+    isEditorRoute,
     hasUnsavedChanges: editorState.hasUnsavedChanges,
     confirmOpen: confirmState.open,
     serverModalOpen: serverManagement.serverModalOpen,
@@ -727,7 +723,6 @@ export function useAppController() {
     localImportFilesRef: bulkWorkflowImport.localImportFilesRef,
     localImportFolderRef: bulkWorkflowImport.localImportFolderRef,
     mappingSearchRef,
-    viewMode,
     editorState,
     editorFilters,
     collapsedNodeIds,
@@ -800,5 +795,20 @@ export function useAppController() {
     createWorkflow: editorActions.createWorkflow,
     updateInfo,
     dismissUpdate,
+    loadEditorWorkflowByRoute: async (serverId: string, workflowId: string) => {
+      serverManagement.setCurrentServerId(serverId);
+      if (editorState.editingWorkflowId === workflowId && editorState.workflowData) {
+        return true;
+      }
+      try {
+        await openEditor(await getWorkflowDetail(serverId, workflowId));
+        return true;
+      } catch (error) {
+        pushToast("error", error instanceof Error ? error.message : t("err_load_saved_wf"));
+        return false;
+      }
+    },
   };
 }
+
+export type AppController = ReturnType<typeof useAppController>;
