@@ -35,7 +35,11 @@ import {
   runWorkflow,
 } from "../services/workflows";
 import { buildTransferExport, importTransferBundle, previewTransferExport, previewTransferImport } from "../services/transfer";
-import type { UpdateCheckResult } from "../services/update";
+import {
+  clearStoredUpdateFeedback,
+  type StoredUpdateFeedback,
+  type UpdateCheckResult,
+} from "../services/update";
 import type { RunWorkflowParam } from "../features/workflows/RunWorkflowModal";
 
 interface TransferState {
@@ -172,6 +176,7 @@ export function useAppController() {
   const [lastAutoWorkflowId, setLastAutoWorkflowId] = useState("");
   const [transferState, setTransferState] = useState<TransferState>(initialTransferState());
   const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null);
+  const [updateFeedback, setUpdateFeedback] = useState<StoredUpdateFeedback | null>(null);
   const [runModalState, setRunModalState] = useState<RunWorkflowState>(initialRunWorkflowState());
   const [historyState, setHistoryState] = useState<WorkflowHistoryState>(initialWorkflowHistoryState());
 
@@ -499,8 +504,10 @@ export function useAppController() {
   });
 
   function dismissUpdate() {
+    clearStoredUpdateFeedback();
     sessionStorage.setItem("update-banner-dismissed", "1");
     setUpdateInfo(null);
+    setUpdateFeedback(null);
   }
 
   async function handleOpenRunWorkflow(workflow: WorkflowSummaryDto) {
@@ -701,6 +708,7 @@ export function useAppController() {
     refreshWorkflows,
     pushToast,
     setUpdateInfo,
+    setUpdateFeedback,
     t,
     viewMode,
     hasUnsavedChanges: editorState.hasUnsavedChanges,
@@ -799,6 +807,7 @@ export function useAppController() {
     handleReorderWorkflows: workflowActions.handleReorderWorkflows,
     createWorkflow: editorActions.createWorkflow,
     updateInfo,
+    updateFeedback,
     dismissUpdate,
   };
 }

@@ -300,5 +300,10 @@ export const enMessages = {
   update_restarting: "Restarting server…",
   update_waiting: "Waiting for server…",
   update_done: "Updated! Reloading…",
+  update_success: "Update completed",
+  update_result_system: "Main skill updated from {before} to {after}.",
+  update_result_frontend: "Bundled frontend updated from {before} to {after}.",
+  update_result_generic: "The latest update has been applied.",
+  update_wait_timeout: "The update finished, but the server did not come back in time. Please refresh or restart manually.",
   update_failed: "Update failed",
 };

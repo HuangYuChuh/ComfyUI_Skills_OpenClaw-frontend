@@ -300,5 +300,10 @@ export const zhMessages = {
   update_restarting: "正在重启服务…",
   update_waiting: "等待服务恢复…",
   update_done: "更新完成，正在刷新…",
+  update_success: "更新成功",
+  update_result_system: "主程序已从 {before} 更新到 {after}。",
+  update_result_frontend: "前端静态文件已从 {before} 更新到 {after}。",
+  update_result_generic: "最新更新已应用。",
+  update_wait_timeout: "更新已经完成，但服务长时间没有恢复。请手动刷新页面或重启服务。",
   update_failed: "更新失败",
 };
