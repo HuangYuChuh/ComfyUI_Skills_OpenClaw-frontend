@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { SectionPanel } from "../../components/layout/SectionPanel";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { FieldShell } from "../../components/ui/FieldShell";
 import { Modal } from "../../components/ui/Modal";
+import { SwitchField } from "../../components/ui/SwitchField";
+import { TextField } from "../../components/ui/TextField";
 import { getServerStatus, testServerConnection } from "../../services/servers";
 import type { SaveServerPayload, ServerDto } from "../../types/api";
 
@@ -158,12 +162,11 @@ export function ServerManager(props: ServerManagerProps) {
   }
 
   return (
-    <section className="card" aria-labelledby="server-manager-title">
-      <div className="section-header panel-toolbar">
-        <div className="panel-title-wrap">
-          <h2 id="server-manager-title" className="card-title">{props.t("server_manager")}</h2>
-        </div>
-        <div className="panel-actions">
+    <SectionPanel
+      title={props.t("server_manager")}
+      titleId="server-manager-title"
+      actions={(
+        <>
           {currentServer ? (
             <button
               type="button"
@@ -177,9 +180,9 @@ export function ServerManager(props: ServerManagerProps) {
           <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onOpenCreate}>
             {props.t("add_server_toggle")}
           </button>
-        </div>
-      </div>
-
+        </>
+      )}
+    >
       {props.servers.length === 0 ? (
         <div className="server-empty-state">
           <p className="section-meta">{props.t("no_servers")}</p>
@@ -220,19 +223,17 @@ export function ServerManager(props: ServerManagerProps) {
               <div id="current-server-actions" className="server-header-controls">
                 <div className="server-status-toggle">
                   {/* Agent visibility toggle */}
-                  <label className="toggle-inline" title={props.t("server_agent_visibility_hint")} style={{ margin: 0 }}>
-                    <span className={currentServer.enabled ? "status-on" : "status-off"}>
-                      {currentServer.enabled ? props.t("server_agent_visible") : props.t("server_agent_hidden")}
-                    </span>
-                    <div className="toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={currentServer.enabled}
-                        onChange={(event) => props.onToggleServer(currentServer, event.target.checked)}
-                      />
-                      <span className="slider" />
-                    </div>
-                  </label>
+                  <SwitchField
+                    checked={currentServer.enabled}
+                    className="server-toggle-field"
+                    onChange={(event) => props.onToggleServer(currentServer, event.target.checked)}
+                    title={props.t("server_agent_visibility_hint")}
+                    label={(
+                      <span className={currentServer.enabled ? "status-on" : "status-off"}>
+                        {currentServer.enabled ? props.t("server_agent_visible") : props.t("server_agent_hidden")}
+                      </span>
+                    )}
+                  />
 
                   <button
                     type="button"
@@ -272,75 +273,83 @@ export function ServerManager(props: ServerManagerProps) {
         )}
       >
         <div className="modal-grid">
-          <div id="modal-server-id-group" className="form-group form-group-half">
-            <label htmlFor="modal-server-id">{props.t("server_id_label")}</label>
-            <input
+          <FieldShell
+            label={props.t("server_id_label")}
+            htmlFor="modal-server-id"
+            helpText={props.t("server_id_help")}
+            className="form-group-half"
+          >
+            <TextField
               ref={serverIdInputRef}
               id="modal-server-id"
-              type="text"
-              className="input-field"
+              fieldClassName="modal-text-field"
               value={props.form.id ?? ""}
               disabled={props.modalMode === "edit"}
               onChange={onInputChange("id")}
               placeholder={props.t("new_server_id_placeholder")}
               autoComplete="off"
             />
-            <p className="form-help">{props.t("server_id_help")}</p>
-          </div>
-          <div className="form-group form-group-half">
-            <label htmlFor="modal-server-name">{props.t("server_name")}</label>
-            <input
+          </FieldShell>
+          <FieldShell
+            label={props.t("server_name")}
+            htmlFor="modal-server-name"
+            helpText={props.t("server_name_help")}
+            className="form-group-half"
+          >
+            <TextField
               ref={serverNameInputRef}
               id="modal-server-name"
-              type="text"
-              className="input-field"
+              fieldClassName="modal-text-field"
               value={props.form.name}
               onChange={onInputChange("name")}
               placeholder={props.t("new_server_name_placeholder")}
               autoComplete="off"
             />
-            <p className="form-help">{props.t("server_name_help")}</p>
-          </div>
-          <div className="form-group form-group-full">
-            <label htmlFor="modal-server-url">{props.t("server_url_label")}</label>
-            <input
+          </FieldShell>
+          <FieldShell
+            label={props.t("server_url_label")}
+            htmlFor="modal-server-url"
+            helpText={props.t("server_url_help_comfyui")}
+            className="form-group-full"
+          >
+            <TextField
               id="modal-server-url"
-              type="text"
-              className="input-field"
+              fieldClassName="modal-text-field"
               value={props.form.url}
               onChange={onInputChange("url")}
               placeholder={props.t("new_server_url_placeholder")}
               autoComplete="off"
             />
-            <p className="form-help">{props.t("server_url_help_comfyui")}</p>
-          </div>
-          <div className="form-group form-group-full">
-            <label htmlFor="modal-server-auth">{props.t("server_auth_label")}</label>
-            <div className="input-with-toggle">
-              <input
+          </FieldShell>
+          <FieldShell
+            label={props.t("server_auth_label")}
+            htmlFor="modal-server-auth"
+            helpText={props.t("server_auth_help")}
+            className="form-group-full"
+          >
+            <TextField
                 id="modal-server-auth"
                 type={showAuth ? "text" : "password"}
-                className="input-field"
+                fieldClassName="modal-text-field"
                 value={props.form.auth ?? ""}
                 onChange={onInputChange("auth")}
                 placeholder={props.t("server_auth_placeholder")}
                 autoComplete="off"
+                trailingAction={(
+                  <button
+                    type="button"
+                    className="btn-icon input-toggle-btn"
+                    onClick={() => setShowAuth((value) => !value)}
+                    aria-label={showAuth ? "Hide token" : "Show token"}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                      {!showAuth && <line x1="1" y1="1" x2="23" y2="23" />}
+                    </svg>
+                  </button>
+                )}
               />
-              <button
-                type="button"
-                className="btn-icon input-toggle-btn"
-                onClick={() => setShowAuth((value) => !value)}
-                aria-label={showAuth ? "Hide token" : "Show token"}
-                tabIndex={-1}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                  {!showAuth && <line x1="1" y1="1" x2="23" y2="23" />}
-                </svg>
-              </button>
-            </div>
-            <p className="form-help">{props.t("server_auth_help")}</p>
             <div className="form-test-connection">
               <button
                 type="button"
@@ -363,21 +372,23 @@ export function ServerManager(props: ServerManagerProps) {
                 </span>
               )}
             </div>
-          </div>
-          <div className="form-group form-group-full">
-            <label htmlFor="modal-server-output">{props.t("server_output_dir")}</label>
-            <input
+          </FieldShell>
+          <FieldShell
+            label={props.t("server_output_dir")}
+            htmlFor="modal-server-output"
+            className="form-group-full"
+          >
+            <TextField
               id="modal-server-output"
-              type="text"
-              className="input-field"
+              fieldClassName="modal-text-field"
               value={props.form.output_dir}
               onChange={onInputChange("output_dir")}
               placeholder="./outputs"
               autoComplete="off"
             />
-          </div>
+          </FieldShell>
         </div>
       </Modal>
-    </section>
+    </SectionPanel>
   );
 }

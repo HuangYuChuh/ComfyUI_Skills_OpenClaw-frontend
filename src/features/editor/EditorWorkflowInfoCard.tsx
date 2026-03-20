@@ -1,4 +1,6 @@
 import { useState, type ChangeEvent } from "react";
+import { FieldShell } from "../../components/ui/FieldShell";
+import { TextField } from "../../components/ui/TextField";
 
 interface EditorWorkflowInfoCardProps {
   workflowId: string;
@@ -22,29 +24,27 @@ export function EditorWorkflowInfoCard(props: EditorWorkflowInfoCardProps) {
     <section className="card" aria-labelledby="editor-info-title">
       <h2 id="editor-info-title" className="card-title">{props.t("wf_basic_info")}</h2>
       <div className="editor-info-grid">
-        <div className="form-group editor-info-field no-margin">
-          <label htmlFor="wf-id">{props.t("wf_id_label")}</label>
-          <input
+        <FieldShell label={props.t("wf_id_label")} htmlFor="wf-id" className="editor-info-field no-margin" noMargin>
+          <TextField
             id="wf-id"
-            className="input-field editor-info-input"
+            fieldClassName="editor-info-input"
             value={props.workflowId}
             onChange={(event) => props.onWorkflowIdChange(event.target.value)}
             placeholder={props.t("wf_id_placeholder")}
             autoComplete="off"
             spellCheck={false}
           />
-        </div>
-        <div className="form-group editor-info-field no-margin">
-          <label htmlFor="wf-desc">{props.t("wf_desc_label")}</label>
-          <input
+        </FieldShell>
+        <FieldShell label={props.t("wf_desc_label")} htmlFor="wf-desc" className="editor-info-field no-margin" noMargin>
+          <TextField
             id="wf-desc"
-            className="input-field editor-info-input"
+            fieldClassName="editor-info-input"
             value={props.description}
             onChange={(event) => props.onDescriptionChange(event.target.value)}
             placeholder={props.t("wf_desc_placeholder")}
             autoComplete="off"
           />
-        </div>
+        </FieldShell>
       </div>
 
       {!props.hasWorkflow ? (

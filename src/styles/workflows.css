@@ -154,7 +154,7 @@ button:disabled,
   margin-bottom: 16px;
 }
 
-.workflow-toolbar > #workflow-search {
+.workflow-search-field {
   flex: 1 1 360px;
   min-width: 260px;
 }
@@ -242,7 +242,7 @@ button:disabled,
   align-items: center;
 }
 
-.mapping-toolbar-top > #mapping-search {
+.mapping-search-field {
   flex: 1 1 360px;
   min-width: 260px;
 }
@@ -261,6 +261,7 @@ button:disabled,
 .mapping-exposed-only-label {
   margin: 0;
   min-height: 44px;
+  padding: 0 4px;
 }
 
 .workflow-item,
@@ -421,21 +422,20 @@ button:disabled,
   margin-bottom: 0;
 }
 
-.run-workflow-help,
 .run-workflow-meta,
 .workflow-history-item-meta {
   color: var(--text-muted);
   font-size: 0.88rem;
 }
 
-.run-workflow-required {
-  margin-left: 4px;
-  color: #fda4af;
-}
-
 .run-workflow-textarea {
   min-height: 120px;
   resize: vertical;
+}
+
+.run-workflow-switch {
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .run-workflow-result,
