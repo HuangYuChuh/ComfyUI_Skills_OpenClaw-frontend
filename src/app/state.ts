@@ -2,7 +2,6 @@ import type { ToastMessage } from "../components/ui/ToastViewport";
 import type { SaveServerPayload } from "../types/api";
 import type { EditorState } from "../types/editor";
 
-export type ViewMode = "main" | "editor";
 export type ServerModalMode = "add" | "edit";
 
 export interface ConfirmState {

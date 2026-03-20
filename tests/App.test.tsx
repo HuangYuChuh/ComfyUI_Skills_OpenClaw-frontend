@@ -271,6 +271,8 @@ describe("App", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    window.sessionStorage.clear();
+    window.location.hash = "#/";
     window.scrollTo = vi.fn();
 
     listServersMock.mockResolvedValue({
@@ -730,5 +732,15 @@ describe("App", () => {
       expect(screen.getByRole("button", { name: "Import Local Files" })).not.toBeDisabled();
       expect(screen.getByRole("button", { name: "Import Local Folder" })).not.toBeDisabled();
     });
+  });
+
+  it("loads a saved workflow directly from the editor route", async () => {
+    window.location.hash = "#/editor/local/wf-a";
+    render(<App />);
+
+    await screen.findByDisplayValue("wf-a");
+
+    expect(getWorkflowDetailMock).toHaveBeenCalledWith("local", "wf-a");
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
   });
 });

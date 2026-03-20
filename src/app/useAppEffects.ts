@@ -2,7 +2,7 @@ import { useEffect, type RefObject } from "react";
 import { initPixelBlastBackground } from "../lib/pixelBlastBackground";
 import { safeWriteLocalStorage } from "../lib/storage";
 import type { ToastMessage } from "../components/ui/ToastViewport";
-import type { TranslateFn, ViewMode } from "./state";
+import type { TranslateFn } from "./state";
 
 import { checkSystemUpdate, type UpdateCheckResult } from "../services/update";
 
@@ -15,7 +15,7 @@ interface UseAppEffectsArgs {
   pushToast: (type: "error", message: string) => void;
   setUpdateInfo: (info: UpdateCheckResult | null) => void;
   t: TranslateFn;
-  viewMode: ViewMode;
+  isEditorRoute: boolean;
   hasUnsavedChanges: boolean;
   confirmOpen: boolean;
   serverModalOpen: boolean;
@@ -76,10 +76,10 @@ export function useAppEffects(args: UseAppEffectsArgs) {
   }) || undefined, []);
 
   useEffect(() => {
-    if (args.viewMode === "editor") {
+    if (args.isEditorRoute) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [args.viewMode]);
+  }, [args.isEditorRoute]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -95,7 +95,7 @@ export function useAppEffects(args: UseAppEffectsArgs) {
 
   useEffect(() => {
     function handleEditorShortcuts(event: KeyboardEvent) {
-      if (args.viewMode !== "editor" || args.confirmOpen || args.serverModalOpen || args.transferModalOpen) {
+      if (!args.isEditorRoute || args.confirmOpen || args.serverModalOpen || args.transferModalOpen) {
         return;
       }
 
@@ -135,6 +135,6 @@ export function useAppEffects(args: UseAppEffectsArgs) {
     args.saveWorkflow,
     args.serverModalOpen,
     args.transferModalOpen,
-    args.viewMode,
+    args.isEditorRoute,
   ]);
 }
