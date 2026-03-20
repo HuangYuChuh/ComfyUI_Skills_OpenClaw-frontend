@@ -303,8 +303,34 @@ body.modal-open {
   padding: 14px var(--space-4) 18px;
   border-top: 1px solid var(--card-border);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-1);
+}
+
+.modal-actions-leading,
+.modal-actions-trailing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.modal-actions-leading {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.modal-actions-trailing {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.server-modal-import-checkbox {
+  min-height: 40px;
+}
+
+.server-modal-import-checkbox .checkbox-field-label {
+  font-size: 0.94rem;
 }
 
 .confirm-modal-message {

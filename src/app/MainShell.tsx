@@ -21,7 +21,7 @@ interface MainShellProps {
   onOpenEditServer: (server: ServerDto) => void;
   onServerFormChange: (next: SaveServerPayload) => void;
   onCloseServerModal: () => void;
-  onSubmitServerModal: () => void;
+  onSubmitServerModal: (importAfterCreate?: boolean) => void | Promise<void>;
   onWorkflowSearchChange: (value: string) => void;
   onWorkflowSortChange: (value: string) => void;
   onCreateWorkflow: () => void;

@@ -58,7 +58,10 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
     setBulkImportState(initialBulkImportState());
   }
 
-  function ensureImportServerReady() {
+  function ensureImportServerReady(explicitServerId?: string) {
+    if (explicitServerId) {
+      return explicitServerId;
+    }
     if (args.currentServer?.unsupported) {
       args.pushToast("info", args.t("server_unsupported_reason", { type: args.currentServer.server_type || "unknown" }));
       return null;
@@ -106,8 +109,8 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
     localImportFolderRef.current?.click();
   }
 
-  async function handleImportAllFromComfyUI() {
-    const serverId = ensureImportServerReady();
+  async function handleImportAllFromComfyUI(explicitServerId?: string) {
+    const serverId = ensureImportServerReady(explicitServerId);
     if (!serverId) {
       return;
     }

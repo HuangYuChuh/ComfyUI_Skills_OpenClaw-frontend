@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { SectionPanel } from "../../components/layout/SectionPanel";
+import { CheckboxField } from "../../components/ui/CheckboxField";
 import { CustomSelect } from "../../components/ui/CustomSelect";
 import { FieldShell } from "../../components/ui/FieldShell";
 import { Modal } from "../../components/ui/Modal";
@@ -28,7 +29,7 @@ interface ServerManagerProps {
   form: SaveServerPayload;
   onFormChange: (next: SaveServerPayload) => void;
   onCloseModal: () => void;
-  onSubmitModal: () => void;
+  onSubmitModal: (importAfterCreate?: boolean) => void | Promise<void>;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
@@ -96,6 +97,7 @@ export function ServerManager(props: ServerManagerProps) {
   const [serverStatus, setServerStatus] = useState<ServerRunStatus>("checking");
   const [showAuth, setShowAuth] = useState(false);
   const [testResult, setTestResult] = useState<{ state: "idle" | "testing" | "online" | "offline"; message?: string }>({ state: "idle" });
+  const [importAfterCreate, setImportAfterCreate] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,6 +136,12 @@ export function ServerManager(props: ServerManagerProps) {
     }
   }, [props.form, props.modalMode, props.modalOpen, props.onFormChange]);
 
+  useEffect(() => {
+    if (!props.modalOpen || props.modalMode !== "add") {
+      setImportAfterCreate(false);
+    }
+  }, [props.modalMode, props.modalOpen]);
+
   function update<K extends keyof SaveServerPayload>(key: K, value: SaveServerPayload[K]) {
     props.onFormChange({ ...props.form, [key]: value });
   }
@@ -171,7 +179,9 @@ export function ServerManager(props: ServerManagerProps) {
             <button
               type="button"
               className="btn btn-secondary panel-action-btn"
-              onClick={props.onImportAllFromComfyUI}
+              onClick={() => {
+                props.onImportAllFromComfyUI();
+              }}
               disabled={props.bulkImportBusy}
             >
               {props.importingComfyUI ? props.t("bulk_import_loading") : props.t("import_all_from_comfyui")}
@@ -263,10 +273,24 @@ export function ServerManager(props: ServerManagerProps) {
         title={props.modalMode === "edit" ? props.t("edit_server_modal_title") : props.t("add_server_modal_title")}
         onClose={props.onCloseModal}
         initialFocusRef={props.modalMode === "edit" ? serverNameInputRef : serverIdInputRef}
+        footerStart={props.modalMode === "add" ? (
+          <CheckboxField
+            checked={importAfterCreate}
+            onChange={(event) => setImportAfterCreate(event.target.checked)}
+            className="server-modal-import-checkbox"
+            label={props.t("server_import_after_create")}
+          />
+        ) : null}
         actions={(
           <>
             <button type="button" className="btn btn-secondary" onClick={props.onCloseModal}>{props.t("cancel")}</button>
-            <button type="button" className="btn btn-primary" onClick={props.onSubmitModal}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                void props.onSubmitModal(props.modalMode === "add" ? importAfterCreate : false);
+              }}
+            >
               {props.modalMode === "edit" ? props.t("save_server_changes") : props.t("save_and_connect")}
             </button>
           </>

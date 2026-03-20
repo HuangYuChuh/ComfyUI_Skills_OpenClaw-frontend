@@ -6,11 +6,12 @@ interface ModalProps extends PropsWithChildren {
   title: ReactNode;
   onClose: () => void;
   actions?: ReactNode;
+  footerStart?: ReactNode;
   width?: "normal" | "wide" | "xwide";
   initialFocusRef?: RefObject<HTMLElement | null>;
 }
 
-export function Modal({ open, title, onClose, actions, width = "normal", initialFocusRef, children }: ModalProps) {
+export function Modal({ open, title, onClose, actions, footerStart, width = "normal", initialFocusRef, children }: ModalProps) {
   const latestOnCloseRef = useRef(onClose);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
@@ -76,7 +77,12 @@ export function Modal({ open, title, onClose, actions, width = "normal", initial
           <h3 className="card-title">{title}</h3>
         </div>
         <div className="modal-body">{children}</div>
-        {actions ? <div className="modal-actions">{actions}</div> : null}
+        {actions || footerStart ? (
+          <div className="modal-actions">
+            <div className="modal-actions-leading">{footerStart}</div>
+            <div className="modal-actions-trailing">{actions}</div>
+          </div>
+        ) : null}
       </div>
     </div>,
     document.body,

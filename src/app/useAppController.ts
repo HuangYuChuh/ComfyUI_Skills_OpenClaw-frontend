@@ -203,6 +203,10 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     t,
   });
 
+  async function handleSubmitServerModal(importAfterCreate = false) {
+    await serverManagement.handleSubmitServerModal(importAfterCreate, bulkWorkflowImport.handleImportAllFromComfyUI);
+  }
+
   function resetEditorUiState() {
     setCollapsedNodeIds(new Set());
     setExpandedParamKeys(new Set());
@@ -749,7 +753,7 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     importPreviewSummary,
     handleAddServer: serverManagement.handleAddServer,
     handleEditServer: serverManagement.handleEditServer,
-    handleSubmitServerModal: serverManagement.handleSubmitServerModal,
+    handleSubmitServerModal,
     handleToggleServer: serverManagement.handleToggleServer,
     requestDeleteServer: serverManagement.requestDeleteServer,
     handleOpenTransferExport,
