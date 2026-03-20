@@ -1,23 +1,46 @@
 
-.page-header.custom-select-host-open,
+.app-header.custom-select-host-open,
 .card.custom-select-host-open,
 .server-config-container.custom-select-host-open {
   position: relative;
   z-index: 40;
 }
 
-.editor-nav {
+.app-header {
   display: flex;
-  gap: 20px;
-  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
   margin-bottom: 32px;
 }
 
-.editor-nav-title {
+.app-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.app-header-leading,
+.app-header-trailing {
+  flex-shrink: 0;
+}
+
+.app-header-copy {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
+  min-width: 0;
+  max-width: 760px;
+}
+
+.app-header-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 0 0 auto;
 }
 
 .editor-back-btn {
@@ -26,9 +49,18 @@
   min-height: 38px;
 }
 
-.editor-progress-hint {
-  font-size: 0.88rem;
-  color: var(--text-muted);
+.app-header-badge {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fda4af;
+}
+
+.app-header-subtitle {
+  margin: 0;
+  max-width: 34ch;
 }
 
 .editor-stepper {
@@ -88,32 +120,20 @@
 }
 
 .editor-info-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.editor-info-field label {
-  margin-bottom: 0;
+.editor-info-field .field-label {
   color: #d1d5db;
 }
 
 .editor-info-input {
   min-height: 50px;
-  padding: 12px 14px;
   border-color: rgba(148, 163, 184, 0.22);
-  background: linear-gradient(180deg, rgba(20, 24, 32, 0.94) 0%, rgba(11, 15, 21, 0.98) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .editor-info-input:hover {
   border-color: rgba(225, 29, 72, 0.4);
-  background: linear-gradient(180deg, rgba(29, 34, 45, 0.96) 0%, rgba(15, 19, 27, 0.98) 100%);
-}
-
-.page-title-group {
-  flex: 1;
-  min-width: 0;
 }
 
 .logo-frame {
@@ -126,6 +146,17 @@
   background: linear-gradient(135deg, rgba(104, 18, 35, 0.78), rgba(157, 57, 77, 0.46) 45%, rgba(255, 255, 255, 0.14) 100%);
   overflow: hidden;
   clip-path: path("M 17 0 C 8 0 0 8 0 17 L 0 45 C 0 54 8 62 17 62 L 45 62 C 54 62 62 54 62 45 L 62 17 C 62 8 54 0 45 0 Z");
+}
+
+.app-header-actions {
+  display: grid;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.app-header-trailing {
+  display: flex;
+  align-items: flex-start;
 }
 
 .logo-image {
@@ -313,4 +344,3 @@ h1 {
   display: block;
   animation: customSelectFadeIn 0.16s ease-out;
 }
-

@@ -221,7 +221,7 @@
 .param-main {
   display: flex;
   gap: 16px;
-  align-items: center;
+  align-items: flex-start;
   min-width: 0;
 }
 
@@ -244,6 +244,11 @@
   color: #fda4af;
 }
 
+.param-meta {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .param-config {
   display: none;
   gap: 14px;
@@ -254,6 +259,16 @@
 
 .param-config.is-expanded {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: start;
+}
+
+.param-config-field {
+  min-width: 0;
+}
+
+.param-config-input {
+  min-height: 46px;
 }
 
 .param-config-toggle {
@@ -266,57 +281,33 @@
   line-height: 1;
 }
 
-.checkbox-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  cursor: pointer;
+.param-config-field-stack {
+  align-self: stretch;
 }
 
-.toggle-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  margin: 0;
-  color: var(--text-main);
+.param-config-stack {
+  display: grid;
+  gap: 12px;
+  align-content: start;
 }
 
-.checkbox-inline input {
-  margin: 0;
+.param-config-checkbox {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 4px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.toggle-switch {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-  width: 44px;
-  height: 24px;
+.param-config-checkbox .checkbox-field-label {
+  font-size: 0.9rem;
 }
 
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+.param-expose-switch {
+  flex: 0 0 auto;
 }
 
-.slider {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: #374151;
-  transition: background-color 0.25s ease;
-}
-
-.slider::before {
-  content: "";
-  position: absolute;
-  left: 3px;
-  bottom: 3px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.25s ease;
+.param-expose-switch .switch-field-control {
+  flex-basis: 44px;
 }

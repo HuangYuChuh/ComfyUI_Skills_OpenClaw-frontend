@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { SectionPanel } from "../../components/layout/SectionPanel";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { SwitchField } from "../../components/ui/SwitchField";
+import { TextField } from "../../components/ui/TextField";
 import type { WorkflowSummaryDto } from "../../types/api";
 
 interface WorkflowManagerProps {
@@ -128,13 +131,12 @@ export function WorkflowManager(props: WorkflowManagerProps) {
   ], [props.t]);
 
   return (
-    <section className="card" aria-labelledby="workflow-manager-title">
-      <div className="section-header panel-toolbar">
-        <div className="panel-title-wrap">
-          <h2 id="workflow-manager-title" className="card-title">{props.t("workflow_manager")}</h2>
-        </div>
-        <div className="panel-actions">
-          {props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta">{summary}</p> : null}
+    <SectionPanel
+      title={props.t("workflow_manager")}
+      titleId="workflow-manager-title"
+      meta={props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta">{summary}</p> : null}
+      actions={(
+        <>
           <button
             type="button"
             className="btn btn-secondary panel-action-btn"
@@ -154,13 +156,14 @@ export function WorkflowManager(props: WorkflowManagerProps) {
           <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onCreateWorkflow}>
             {props.t("register_new_short")}
           </button>
-        </div>
-      </div>
+        </>
+      )}
+    >
 
       <div className="workflow-toolbar">
-        <input
+        <TextField
           id="workflow-search"
-          className="input-field"
+          fieldClassName="workflow-search-field"
           value={props.search}
           onChange={(event) => props.onSearchChange(event.target.value)}
           placeholder={props.t("workflow_search_placeholder")}
@@ -283,22 +286,20 @@ export function WorkflowManager(props: WorkflowManagerProps) {
               ) : null}
 
               <div className="workflow-status-toggle">
-                <label className="toggle-inline" aria-label={props.t("toggle_workflow", { id: workflow.id })}>
-                  <span className={`workflow-enabled-label ${workflow.enabled ? "status-on" : "status-off"}`}>
-                    {workflow.enabled ? props.t("wf_enabled") : props.t("wf_disabled")}
-                  </span>
-                  <div className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={workflow.enabled}
-                      onChange={(event) => {
-                        setOpenMenuId(null);
-                        props.onToggleWorkflow(workflow, event.target.checked);
-                      }}
-                    />
-                    <span className="slider" />
-                  </div>
-                </label>
+                <SwitchField
+                  ariaLabel={props.t("toggle_workflow", { id: workflow.id })}
+                  checked={workflow.enabled}
+                  className="workflow-toggle-field"
+                  label={(
+                    <span className={`workflow-enabled-label ${workflow.enabled ? "status-on" : "status-off"}`}>
+                      {workflow.enabled ? props.t("wf_enabled") : props.t("wf_disabled")}
+                    </span>
+                  )}
+                  onChange={(event) => {
+                    setOpenMenuId(null);
+                    props.onToggleWorkflow(workflow, event.target.checked);
+                  }}
+                />
               </div>
 
               <button
@@ -382,6 +383,6 @@ export function WorkflowManager(props: WorkflowManagerProps) {
           </article>
         ))}
       </div>
-    </section>
+    </SectionPanel>
   );
 }

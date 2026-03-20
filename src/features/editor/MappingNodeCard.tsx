@@ -1,4 +1,8 @@
+import { CheckboxField } from "../../components/ui/CheckboxField";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { FieldShell } from "../../components/ui/FieldShell";
+import { SwitchField } from "../../components/ui/SwitchField";
+import { TextField } from "../../components/ui/TextField";
 import type { SchemaParam } from "../../types/editor";
 import type { MappingParam } from "./types";
 
@@ -55,14 +59,12 @@ export function MappingNodeCard(props: MappingNodeCardProps) {
             return (
               <div key={parameter.key} className={`param-row${parameter.exposed ? " active" : ""}`}>
                 <div className="param-main">
-                  <label className="toggle-switch" aria-label={parameter.field}>
-                    <input
-                      type="checkbox"
-                      checked={parameter.exposed}
-                      onChange={(event) => props.onUpdateParam(parameter.key, "exposed", event.target.checked)}
-                    />
-                    <span className="slider" />
-                  </label>
+                  <SwitchField
+                    ariaLabel={parameter.field}
+                    checked={parameter.exposed}
+                    className="param-expose-switch"
+                    onChange={(event) => props.onUpdateParam(parameter.key, "exposed", event.target.checked)}
+                  />
                   <div className="param-main-copy">
                     <div className={`param-title${parameter.exposed ? " active" : ""}`}>
                       <span>{parameter.field}</span>
@@ -91,22 +93,24 @@ export function MappingNodeCard(props: MappingNodeCardProps) {
 
                 {parameter.exposed && expanded ? (
                   <div className="param-config is-expanded">
-                    <div>
-                      <label>{props.t("alias")}</label>
-                      <input
+                    <FieldShell label={props.t("alias")} htmlFor={`mapping-name-${parameter.key}`} className="param-config-field" noMargin>
+                      <TextField
+                        id={`mapping-name-${parameter.key}`}
+                        fieldClassName="param-config-input"
                         value={parameter.name}
                         onChange={(event) => props.onUpdateParam(parameter.key, "name", event.target.value)}
                       />
-                    </div>
-                    <div>
-                      <label>{props.t("ai_desc")}</label>
-                      <input
+                    </FieldShell>
+                    <FieldShell label={props.t("ai_desc")} htmlFor={`mapping-description-${parameter.key}`} className="param-config-field" noMargin>
+                      <TextField
+                        id={`mapping-description-${parameter.key}`}
+                        fieldClassName="param-config-input"
                         value={parameter.description}
                         onChange={(event) => props.onUpdateParam(parameter.key, "description", event.target.value)}
                       />
-                    </div>
-                    <div>
-                      <label>{props.t("type")}</label>
+                    </FieldShell>
+                    <FieldShell label={props.t("type")} className="param-config-field param-config-field-stack" noMargin>
+                      <div className="param-config-stack">
                       <CustomSelect
                         value={parameter.type}
                         options={renderTypeOptions(props.t)}
@@ -114,15 +118,15 @@ export function MappingNodeCard(props: MappingNodeCardProps) {
                         ariaLabel={props.t("type")}
                         className="is-mapping-sort-select"
                       />
-                      <label className="checkbox-inline">
-                        <input
-                          type="checkbox"
+                        <CheckboxField
+                          id={`mapping-required-${parameter.key}`}
                           checked={parameter.required}
+                          className="param-config-checkbox"
                           onChange={(event) => props.onUpdateParam(parameter.key, "required", event.target.checked)}
+                          label={props.t("required")}
                         />
-                        <span>{props.t("required")}</span>
-                      </label>
-                    </div>
+                      </div>
+                    </FieldShell>
                   </div>
                 ) : null}
               </div>
