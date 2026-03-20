@@ -26,8 +26,6 @@ interface MainShellProps {
   onWorkflowSortChange: (value: string) => void;
   onCreateWorkflow: () => void;
   onCreateWorkflowFromFile: (file: File | null) => void;
-  onImportLocalFiles: () => void;
-  onImportLocalFolder: () => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
   onRunWorkflow: (workflow: WorkflowSummaryDto) => void;
   onOpenWorkflowHistory: (workflow: WorkflowSummaryDto) => void;
@@ -37,7 +35,6 @@ interface MainShellProps {
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
   bulkImportBusy: boolean;
   importingComfyUI: boolean;
-  importingLocal: boolean;
   t: TranslateFn;
 }
 
@@ -73,8 +70,6 @@ export function MainShell(props: MainShellProps) {
         onSortChange={props.onWorkflowSortChange}
         onCreateWorkflow={props.onCreateWorkflow}
         onCreateWorkflowFromFile={props.onCreateWorkflowFromFile}
-        onImportLocalFiles={props.onImportLocalFiles}
-        onImportLocalFolder={props.onImportLocalFolder}
         onEditWorkflow={props.onEditWorkflow}
         onRunWorkflow={props.onRunWorkflow}
         onOpenWorkflowHistory={props.onOpenWorkflowHistory}
@@ -82,8 +77,6 @@ export function MainShell(props: MainShellProps) {
         onToggleWorkflow={props.onToggleWorkflow}
         onUploadWorkflowVersion={props.onUploadWorkflowVersion}
         onReorderWorkflows={props.onReorderWorkflows}
-        bulkImportBusy={props.bulkImportBusy}
-        importingLocal={props.importingLocal}
         t={props.t}
       />
     </>

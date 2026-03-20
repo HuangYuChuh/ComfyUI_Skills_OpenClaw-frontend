@@ -85,8 +85,6 @@ export function DashboardPage({ controller }: DashboardPageProps) {
         onWorkflowSortChange={controller.setWorkflowSort}
         onCreateWorkflow={handleCreateWorkflow}
         onCreateWorkflowFromFile={handleCreateWorkflowFromFile}
-        onImportLocalFiles={controller.handleOpenLocalImportFiles}
-        onImportLocalFolder={controller.handleOpenLocalImportFolder}
         onEditWorkflow={handleEditWorkflow}
         onRunWorkflow={controller.handleOpenRunWorkflow}
         onOpenWorkflowHistory={controller.handleOpenWorkflowHistory}
@@ -96,7 +94,6 @@ export function DashboardPage({ controller }: DashboardPageProps) {
         onReorderWorkflows={controller.handleReorderWorkflows}
         bulkImportBusy={bulkImportBusy}
         importingComfyUI={controller.bulkImportState.loading && controller.bulkImportState.source === "comfyui"}
-        importingLocal={controller.bulkImportState.loading && controller.bulkImportState.source === "local"}
         t={controller.t}
       />
     </AppLayout>

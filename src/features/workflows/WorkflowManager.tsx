@@ -14,8 +14,6 @@ interface WorkflowManagerProps {
   onSortChange: (value: string) => void;
   onCreateWorkflow: () => void;
   onCreateWorkflowFromFile: (file: File | null) => void;
-  onImportLocalFiles: () => void;
-  onImportLocalFolder: () => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
   onRunWorkflow: (workflow: WorkflowSummaryDto) => void;
   onOpenWorkflowHistory: (workflow: WorkflowSummaryDto) => void;
@@ -23,8 +21,6 @@ interface WorkflowManagerProps {
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
-  bulkImportBusy: boolean;
-  importingLocal: boolean;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
@@ -136,27 +132,9 @@ export function WorkflowManager(props: WorkflowManagerProps) {
       titleId="workflow-manager-title"
       meta={props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta">{summary}</p> : null}
       actions={(
-        <>
-          <button
-            type="button"
-            className="btn btn-secondary panel-action-btn"
-            onClick={props.onImportLocalFiles}
-            disabled={props.bulkImportBusy}
-          >
-            {props.importingLocal ? props.t("bulk_import_loading") : props.t("import_local_files")}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary panel-action-btn"
-            onClick={props.onImportLocalFolder}
-            disabled={props.bulkImportBusy}
-          >
-            {props.importingLocal ? props.t("bulk_import_loading") : props.t("import_local_folder")}
-          </button>
-          <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onCreateWorkflow}>
-            {props.t("register_new_short")}
-          </button>
-        </>
+        <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onCreateWorkflow}>
+          {props.t("register_new_short")}
+        </button>
       )}
     >
 

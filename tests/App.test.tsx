@@ -709,7 +709,7 @@ describe("App", () => {
     expect(within(dialog).getByText("Local Import Report")).toBeInTheDocument();
   });
 
-  it("disables local import actions while a ComfyUI import is still running", async () => {
+  it("keeps local import actions hidden while a ComfyUI import is still running", async () => {
     const user = userEvent.setup();
     const deferredImport = createDeferred<typeof bulkImportReportFixture>();
     importWorkflowsFromComfyUIMock.mockReturnValueOnce(
@@ -720,8 +720,8 @@ describe("App", () => {
     await user.click(await screen.findByRole("button", { name: "Import All from ComfyUI" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Import Local Files" })).toBeDisabled();
-      expect(screen.getByRole("button", { name: "Import Local Folder" })).toBeDisabled();
+      expect(screen.queryByRole("button", { name: "Import Local Files" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Import Local Folder" })).toBeNull();
       expect(screen.getByRole("button", { name: "Importing..." })).toBeDisabled();
     });
 
@@ -729,8 +729,8 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Import All from ComfyUI" })).not.toBeDisabled();
-      expect(screen.getByRole("button", { name: "Import Local Files" })).not.toBeDisabled();
-      expect(screen.getByRole("button", { name: "Import Local Folder" })).not.toBeDisabled();
+      expect(screen.queryByRole("button", { name: "Import Local Files" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Import Local Folder" })).toBeNull();
     });
   });
 
