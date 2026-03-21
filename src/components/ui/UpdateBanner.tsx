@@ -36,6 +36,16 @@ function buildFeedbackMessage(feedback: StoredUpdateFeedback, t: UpdateBannerPro
   return feedback.message || t("update_failed");
 }
 
+export function buildCacheBustedReloadUrl(location: Location, timestamp = Date.now()) {
+  const url = new URL(location.href);
+  url.searchParams.set("__ui_reload", String(timestamp));
+  return url.toString();
+}
+
+export function replaceWindowLocation(url: string) {
+  window.location.replace(url);
+}
+
 export function UpdateBanner({ localCommit, remoteCommit, feedback, onDismiss, t }: UpdateBannerProps) {
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState("");
@@ -69,7 +79,9 @@ export function UpdateBanner({ localCommit, remoteCommit, feedback, onDismiss, t
           if (res.ok) {
             window.clearInterval(poll);
             setStage("done");
-            setTimeout(() => window.location.reload(), 800);
+            setTimeout(() => {
+              replaceWindowLocation(buildCacheBustedReloadUrl(window.location));
+            }, 800);
             return;
           }
         } catch {
