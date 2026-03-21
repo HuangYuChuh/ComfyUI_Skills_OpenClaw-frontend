@@ -181,6 +181,9 @@ export function useAppController() {
   const mappingSearchRef = useRef<HTMLInputElement | null>(null);
   const transferSessionRef = useRef(0);
   const importPreviewRequestRef = useRef(0);
+  const runModalRequestRef = useRef(0);
+  const historyListRequestRef = useRef(0);
+  const historyDetailRequestRef = useRef(0);
   const { toasts, dismissToast, pushToast } = useToastState();
   const { confirmState, setConfirmState, resolveConfirm, confirm } = useConfirmState();
   const t = (key: string, vars?: Record<string, string | number>) => translate(language, key, vars);
@@ -235,6 +238,45 @@ export function useAppController() {
 
   function isCurrentTransferSession(sessionId: number) {
     return transferSessionRef.current === sessionId;
+  }
+
+  function createRunModalRequest() {
+    runModalRequestRef.current += 1;
+    return runModalRequestRef.current;
+  }
+
+  function isCurrentRunModalRequest(requestId: number) {
+    return runModalRequestRef.current === requestId;
+  }
+
+  function invalidateRunModalRequests() {
+    runModalRequestRef.current += 1;
+  }
+
+  function createHistoryListRequest() {
+    historyListRequestRef.current += 1;
+    return historyListRequestRef.current;
+  }
+
+  function isCurrentHistoryListRequest(requestId: number) {
+    return historyListRequestRef.current === requestId;
+  }
+
+  function invalidateHistoryListRequests() {
+    historyListRequestRef.current += 1;
+  }
+
+  function createHistoryDetailRequest() {
+    historyDetailRequestRef.current += 1;
+    return historyDetailRequestRef.current;
+  }
+
+  function isCurrentHistoryDetailRequest(requestId: number) {
+    return historyDetailRequestRef.current === requestId;
+  }
+
+  function invalidateHistoryDetailRequests() {
+    historyDetailRequestRef.current += 1;
   }
 
   function closeTransferModal() {
@@ -504,6 +546,7 @@ export function useAppController() {
   }
 
   async function handleOpenRunWorkflow(workflow: WorkflowSummaryDto) {
+    const requestId = createRunModalRequest();
     setRunModalState((current) => ({
       ...current,
       open: true,
@@ -513,6 +556,9 @@ export function useAppController() {
     }));
     try {
       const detail = await getWorkflowDetail(workflow.server_id, workflow.id);
+      if (!isCurrentRunModalRequest(requestId)) {
+        return;
+      }
       const schema = normalizeRunSchema(detail);
       setRunModalState({
         open: true,
@@ -524,12 +570,16 @@ export function useAppController() {
         result: null,
       });
     } catch (error) {
+      if (!isCurrentRunModalRequest(requestId)) {
+        return;
+      }
       setRunModalState(initialRunWorkflowState());
       pushToast("error", error instanceof Error ? error.message : t("err_load_saved_wf"));
     }
   }
 
   function closeRunWorkflowModal() {
+    invalidateRunModalRequests();
     setRunModalState(initialRunWorkflowState());
   }
 
@@ -586,6 +636,8 @@ export function useAppController() {
   }
 
   async function loadWorkflowHistory(workflow: WorkflowSummaryDto, selectedRunId?: string | null) {
+    const listRequestId = createHistoryListRequest();
+    invalidateHistoryDetailRequests();
     setHistoryState((current) => ({
       ...current,
       open: true,
@@ -596,6 +648,9 @@ export function useAppController() {
     }));
     try {
       const response = await listWorkflowHistory(workflow.server_id, workflow.id);
+      if (!isCurrentHistoryListRequest(listRequestId)) {
+        return;
+      }
       const nextSelectedRunId = selectedRunId ?? response.history[0]?.run_id ?? null;
       setHistoryState({
         open: true,
@@ -607,7 +662,11 @@ export function useAppController() {
         detailLoading: Boolean(nextSelectedRunId),
       });
       if (nextSelectedRunId) {
+        const detailRequestId = createHistoryDetailRequest();
         const detail = await getWorkflowHistoryEntry(workflow.server_id, workflow.id, nextSelectedRunId);
+        if (!isCurrentHistoryListRequest(listRequestId) || !isCurrentHistoryDetailRequest(detailRequestId)) {
+          return;
+        }
         setHistoryState((current) => ({
           ...current,
           detail,
@@ -615,6 +674,9 @@ export function useAppController() {
         }));
       }
     } catch (error) {
+      if (!isCurrentHistoryListRequest(listRequestId)) {
+        return;
+      }
       setHistoryState(initialWorkflowHistoryState());
       pushToast("error", error instanceof Error ? error.message : t("workflow_history_load_error"));
     }
@@ -625,6 +687,8 @@ export function useAppController() {
   }
 
   function closeWorkflowHistoryModal() {
+    invalidateHistoryListRequests();
+    invalidateHistoryDetailRequests();
     setHistoryState(initialWorkflowHistoryState());
   }
 
@@ -639,11 +703,18 @@ export function useAppController() {
     if (!historyState.workflow) {
       return;
     }
+    const detailRequestId = createHistoryDetailRequest();
     setHistoryState((current) => ({ ...current, selectedRunId: runId, detailLoading: true }));
     try {
       const detail = await getWorkflowHistoryEntry(historyState.workflow.server_id, historyState.workflow.id, runId);
+      if (!isCurrentHistoryDetailRequest(detailRequestId)) {
+        return;
+      }
       setHistoryState((current) => ({ ...current, detail, detailLoading: false }));
     } catch (error) {
+      if (!isCurrentHistoryDetailRequest(detailRequestId)) {
+        return;
+      }
       setHistoryState((current) => ({ ...current, detail: null, detailLoading: false }));
       pushToast("error", error instanceof Error ? error.message : t("workflow_history_load_error"));
     }
