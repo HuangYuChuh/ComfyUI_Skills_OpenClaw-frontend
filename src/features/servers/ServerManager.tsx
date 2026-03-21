@@ -8,8 +8,15 @@ import { SwitchField } from "../../components/ui/SwitchField";
 import { TextField } from "../../components/ui/TextField";
 import { getServerStatus, testServerConnection } from "../../services/servers";
 import type { SaveServerPayload, ServerDto } from "../../types/api";
-
-const DEFAULT_COMFYUI_URL = "http://127.0.0.1:8188";
+import { EditIcon, StatusDot, TrashIcon } from "./components/ServerManagerParts";
+import {
+  DEFAULT_COMFYUI_URL,
+  buildServerOptions,
+  getCurrentServerWarning,
+  getSelectedServerLabel,
+  getServerStatusLabel,
+  type ServerRunStatus,
+} from "./utils/serverManager";
 
 interface ServerManagerProps {
   title?: string;
@@ -33,63 +40,11 @@ interface ServerManagerProps {
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
-function EditIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className="lucide lucide-pencil"
-    >
-      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-      <path d="m15 5 4 4" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    >
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-    </svg>
-  );
-}
-
-function StatusDot({ status }: { status: "online" | "offline" | "checking" }) {
-  let color = "#a3a3a3";
-  if (status === "online") color = "#22c55e";
-  else if (status === "offline") color = "#ef4444";
-  return (
-    <span
-      title={status}
-      style={{
-        display: "inline-block",
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        backgroundColor: color,
-        marginRight: 6,
-        flexShrink: 0,
-        animation: status === "checking" ? "pulse 1.5s infinite" : undefined,
-      }}
-    />
-  );
-}
-
-type ServerRunStatus = "online" | "offline" | "checking";
-
 export function ServerManager(props: ServerManagerProps) {
   const currentServer = props.servers.find((server) => server.id === props.currentServerId) || null;
-  const currentServerWarning = currentServer?.unsupported
-    ? props.t("server_unsupported_reason", { type: currentServer.server_type || "unknown" })
-    : "";
-  const selectedServerLabel = currentServer?.name || currentServer?.id || "";
-  const serverOptions = props.servers.map((server) => ({
-    value: server.id,
-    label: `${server.name || server.id}${server.unsupported ? ` ${props.t("server_unsupported_short")}` : ""}`,
-  }));
+  const currentServerWarning = getCurrentServerWarning(currentServer, props.t);
+  const selectedServerLabel = getSelectedServerLabel(currentServer);
+  const serverOptions = buildServerOptions(props.servers, props.t);
   const serverIdInputRef = useRef<HTMLInputElement | null>(null);
   const serverNameInputRef = useRef<HTMLInputElement | null>(null);
   const hasSeededDefaultUrlRef = useRef(false);
@@ -150,10 +105,7 @@ export function ServerManager(props: ServerManagerProps) {
     return (event: ChangeEvent<HTMLInputElement>) => update(key, event.target.value as SaveServerPayload[K]);
   }
 
-  function statusLabel(): string {
-    if (serverStatus === "checking") return "...";
-    return props.t(serverStatus === "online" ? "server_status_online" : "server_status_offline");
-  }
+  const statusLabel = getServerStatusLabel(serverStatus, props.t);
 
   async function handleTestConnection() {
     const url = (props.form.url || "").trim();
@@ -208,7 +160,7 @@ export function ServerManager(props: ServerManagerProps) {
                 <StatusDot status={serverStatus} />
                 {props.t("current_server_title")}
                 <span style={{ fontSize: "0.85em", opacity: 0.7 }}>
-                  ({statusLabel()})
+                  ({statusLabel})
                 </span>
               </span>
               <div className="server-selector-wrapper">

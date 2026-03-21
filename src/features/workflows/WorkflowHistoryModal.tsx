@@ -1,6 +1,14 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "../../components/ui/Modal";
 import type { ExecutionHistoryDetailDto, ExecutionHistorySummaryDto } from "../../types/api";
+import { WorkflowHistoryArgumentPanel } from "./components/WorkflowHistoryArgumentPanel";
+import {
+  formatDuration,
+  formatTimestamp,
+  getImageUrls,
+  getStatusClassName,
+  shortenId,
+} from "./utils/history";
 
 interface WorkflowHistoryModalProps {
   open: boolean;
@@ -17,139 +25,6 @@ interface WorkflowHistoryModalProps {
   onDeleteRun: (runId: string) => void;
   onClear: () => void;
 }
-
-const historyTimestampFormatter = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-});
-
-function formatTimestamp(value?: string | null) {
-  if (!value) {
-    return "—";
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return historyTimestampFormatter.format(date);
-}
-
-function formatDuration(value?: number | null) {
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    return "—";
-  }
-  if (value < 1000) {
-    return `${value} ms`;
-  }
-  if (value < 60_000) {
-    return `${(value / 1000).toFixed(value < 10_000 ? 2 : 1)} s`;
-  }
-  return `${(value / 60_000).toFixed(1)} min`;
-}
-
-function renderJson(value: unknown) {
-  return JSON.stringify(value ?? {}, null, 2);
-}
-
-function getStatusClassName(status?: string | null) {
-  if (status === "success") {
-    return "status-on";
-  }
-  if (status === "running") {
-    return "status-running";
-  }
-  if (status === "queued") {
-    return "status-waiting";
-  }
-  return "status-off";
-}
-
-function buildHistoryImageUrl(serverId: string, workflowId: string, runId: string, imageIndex: number) {
-  return `/api/servers/${encodeURIComponent(serverId)}/workflow/${encodeURIComponent(workflowId)}/history/${encodeURIComponent(runId)}/images/${imageIndex}`;
-}
-
-function getImageUrls(detail: ExecutionHistoryDetailDto | null) {
-  if (!detail) {
-    return [];
-  }
-  const images = Array.isArray(detail.result?.images) ? detail.result.images : [];
-  return images.map((_, index) => buildHistoryImageUrl(detail.server_id, detail.workflow_id, detail.run_id, index));
-}
-
-function shortenId(value?: string | null) {
-  if (!value) {
-    return "—";
-  }
-  return value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
-}
-
-function formatArgumentKey(key: string) {
-  return key.replace(/^(seed|size|width|height|batch_size|num|num_images|max_images|filename_prefix)_\d+$/i, "$1");
-}
-
-function getArgumentEntries(value: Record<string, unknown> | null | undefined) {
-  return Object.entries(value || {}).sort(([left], [right]) => left.localeCompare(right));
-}
-
-function getArgumentTypeLabel(value: unknown) {
-  if (Array.isArray(value)) {
-    return "array";
-  }
-  if (value === null) {
-    return "null";
-  }
-  return typeof value;
-}
-
-function renderArgumentValue(value: unknown) {
-  if (typeof value === "string") {
-    return <p className="workflow-history-arg-text">{value || "—"}</p>;
-  }
-  if (typeof value === "number" || typeof value === "boolean" || value === null) {
-    return <code className="workflow-history-arg-inline">{String(value)}</code>;
-  }
-  return <pre className="workflow-history-arg-json">{renderJson(value)}</pre>;
-}
-
-const ArgumentPanel = memo(function ArgumentPanel(props: {
-  title: string;
-  data: Record<string, unknown>;
-  t: (key: string, vars?: Record<string, string | number>) => string;
-}) {
-  const entries = useMemo(() => getArgumentEntries(props.data), [props.data]);
-
-  return (
-    <section className="workflow-history-args-panel">
-      <div className="workflow-history-panel-header">
-        <div>
-          <p className="workflow-history-panel-eyebrow">{props.title}</p>
-          <h4>{props.title}</h4>
-        </div>
-        <span className="workflow-meta-tag">{entries.length}</span>
-      </div>
-
-      {entries.length > 0 ? (
-        <div className="workflow-history-arg-grid">
-          {entries.map(([key, value]) => (
-            <article key={key} className="workflow-history-arg-card">
-              <div className="workflow-history-arg-card-top">
-                <strong className="workflow-history-arg-key">{formatArgumentKey(key)}</strong>
-                <span className="workflow-history-arg-type">{getArgumentTypeLabel(value)}</span>
-              </div>
-              <div className="workflow-history-arg-value">{renderArgumentValue(value)}</div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="workflow-history-empty-hint">{props.t("workflow_history_no_args")}</div>
-      )}
-    </section>
-  );
-});
 
 export function WorkflowHistoryModal(props: WorkflowHistoryModalProps) {
   const refreshRef = useRef<HTMLButtonElement | null>(null);
@@ -339,7 +214,7 @@ export function WorkflowHistoryModal(props: WorkflowHistoryModalProps) {
                 </details>
               </div>
 
-              <ArgumentPanel
+              <WorkflowHistoryArgumentPanel
                 title={props.t("workflow_history_resolved_args")}
                 data={props.detail.resolved_args}
                 t={props.t}

@@ -6,15 +6,7 @@ import { SwitchField } from "../../components/ui/SwitchField";
 import { TextAreaField } from "../../components/ui/TextAreaField";
 import { TextField } from "../../components/ui/TextField";
 import type { RunWorkflowResponseDto } from "../../types/api";
-
-export interface RunWorkflowParam {
-  field?: string;
-  type?: string;
-  required?: boolean;
-  description?: string;
-  default?: unknown;
-  choices?: unknown[];
-}
+import type { RunWorkflowParam } from "./types";
 
 interface RunWorkflowModalProps {
   open: boolean;
