@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { CheckboxField } from "../../components/ui/CheckboxField";
 import { Modal } from "../../components/ui/Modal";
 import type {
   TransferExportPreviewDto,
@@ -76,23 +77,20 @@ function TransferExportServer({
   return (
     <article className={`transfer-export-server ${expanded ? "is-open" : ""}`}>
       <div className="transfer-export-server-head">
-        <label className="transfer-export-item transfer-export-item-summary">
-          <input
-            ref={serverCheckboxRef}
-            type="checkbox"
-            checked={allSelected}
-            onChange={() => onToggleServerSelection(server)}
-          />
-          <span className="transfer-export-item-copy">
+        <CheckboxField
+          ref={serverCheckboxRef}
+          checked={allSelected}
+          indeterminate={partiallySelected}
+          onChange={() => onToggleServerSelection(server)}
+          className="transfer-export-item transfer-export-item-summary"
+          label={(
             <span className="transfer-export-server-title-row">
               <span>{server.name || server.server_id}</span>
               {!server.enabled ? <span className="transfer-chip transfer-chip-muted">{t("export_server_disabled")}</span> : null}
             </span>
-            <span className="transfer-export-item-meta">
-              {t("export_selected_count", { selected: selectedCount, total })}
-            </span>
-          </span>
-        </label>
+          )}
+          description={t("export_selected_count", { selected: selectedCount, total })}
+        />
 
         <button
           type="button"
@@ -107,20 +105,19 @@ function TransferExportServer({
       <div className="transfer-export-workflows-wrap">
         <div className="transfer-export-workflows">
           {server.workflows.map((workflow) => (
-            <label key={`${server.server_id}-${workflow.workflow_id}`} className="transfer-export-item">
-              <input
-                type="checkbox"
-                checked={selectedWorkflowIds.includes(workflow.workflow_id)}
-                onChange={() => onToggleWorkflowSelection(server.server_id, workflow.workflow_id)}
-              />
-              <span className="transfer-export-item-copy">
+            <CheckboxField
+              key={`${server.server_id}-${workflow.workflow_id}`}
+              checked={selectedWorkflowIds.includes(workflow.workflow_id)}
+              className="transfer-export-item"
+              onChange={() => onToggleWorkflowSelection(server.server_id, workflow.workflow_id)}
+              label={(
                 <span className="transfer-export-workflow-title-row">
                   <span>{workflow.workflow_id}</span>
                   {!workflow.enabled ? <span className="transfer-chip transfer-chip-muted">{t("export_workflow_disabled")}</span> : null}
                 </span>
-                {workflow.description ? <span className="transfer-export-item-meta">{workflow.description}</span> : null}
-              </span>
-            </label>
+              )}
+              description={workflow.description}
+            />
           ))}
         </div>
       </div>
@@ -228,15 +225,13 @@ export function TransferModal(props: TransferModalProps) {
                 <TransferImportSection key={section.title} title={section.title} items={section.items} t={props.t} />
               ))}
             </div>
-            <label className="checkbox-inline confirm-modal-checkbox" htmlFor="transfer-import-apply-environment">
-              <input
-                id="transfer-import-apply-environment"
-                type="checkbox"
-                checked={props.applyEnvironment}
-                onChange={(event) => props.onApplyEnvironmentChange(event.target.checked)}
-              />
-              <span>{props.t("transfer_apply_environment")}</span>
-            </label>
+            <CheckboxField
+              id="transfer-import-apply-environment"
+              checked={props.applyEnvironment}
+              className="confirm-modal-checkbox"
+              onChange={(event) => props.onApplyEnvironmentChange(event.target.checked)}
+              label={props.t("transfer_apply_environment")}
+            />
             <TransferWarningBox warnings={props.importWarnings} t={props.t} />
           </section>
         </div>

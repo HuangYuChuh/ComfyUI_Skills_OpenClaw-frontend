@@ -2,14 +2,11 @@ import { useEffect, type RefObject } from "react";
 import { initPixelBlastBackground } from "../lib/pixelBlastBackground";
 import { safeWriteLocalStorage } from "../lib/storage";
 import type { ToastMessage } from "../components/ui/ToastViewport";
-import type { TranslateFn, ViewMode } from "./state";
-
-import {
-  checkSystemUpdate,
-  readStoredUpdateFeedback,
-  type StoredUpdateFeedback,
-  type UpdateCheckResult,
-} from "../services/update";
+import type { TranslateFn } from "./state";
+import type { StoredUpdateFeedback, UpdateCheckResult } from "../services/update";
+import { useWorkflowAutoRefresh } from "./hooks/useWorkflowAutoRefresh";
+import { useUpdateBannerBootstrap } from "./hooks/useUpdateBannerBootstrap";
+import { isInputLikeElement } from "./utils/dom";
 
 interface UseAppEffectsArgs {
   language: string;
@@ -21,7 +18,7 @@ interface UseAppEffectsArgs {
   setUpdateInfo: (info: UpdateCheckResult | null) => void;
   setUpdateFeedback: (feedback: StoredUpdateFeedback | null) => void;
   t: TranslateFn;
-  viewMode: ViewMode;
+  isEditorRoute: boolean;
   hasUnsavedChanges: boolean;
   confirmOpen: boolean;
   serverModalOpen: boolean;
@@ -51,29 +48,15 @@ export function useAppEffects(args: UseAppEffectsArgs) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    args.setUpdateFeedback(readStoredUpdateFeedback());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useWorkflowAutoRefresh({
+    enabled: !args.isEditorRoute,
+    refreshWorkflows: args.refreshWorkflows,
+  });
 
-  useEffect(() => {
-    const feedback = readStoredUpdateFeedback();
-    if (feedback) {
-      args.setUpdateFeedback(feedback);
-      return;
-    }
-    const dismissed = sessionStorage.getItem("update-banner-dismissed");
-    if (dismissed) return;
-    const timer = setTimeout(() => {
-      checkSystemUpdate()
-        .then((result) => {
-          if (result.has_update) args.setUpdateInfo(result);
-        })
-        .catch(() => {});
-    }, 3000);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useUpdateBannerBootstrap({
+    setUpdateFeedback: args.setUpdateFeedback,
+    setUpdateInfo: args.setUpdateInfo,
+  });
 
   useEffect(() => initPixelBlastBackground({
     variant: "circle",
@@ -92,10 +75,10 @@ export function useAppEffects(args: UseAppEffectsArgs) {
   }) || undefined, []);
 
   useEffect(() => {
-    if (args.viewMode === "editor") {
+    if (args.isEditorRoute) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [args.viewMode]);
+  }, [args.isEditorRoute]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -111,18 +94,12 @@ export function useAppEffects(args: UseAppEffectsArgs) {
 
   useEffect(() => {
     function handleEditorShortcuts(event: KeyboardEvent) {
-      if (args.viewMode !== "editor" || args.confirmOpen || args.serverModalOpen || args.transferModalOpen) {
+      if (!args.isEditorRoute || args.confirmOpen || args.serverModalOpen || args.transferModalOpen) {
         return;
       }
 
       const target = event.target as HTMLElement | null;
-      const isInputLike = Boolean(
-        target
-        && (target.tagName === "INPUT"
-          || target.tagName === "TEXTAREA"
-          || target.tagName === "SELECT"
-          || target.isContentEditable),
-      );
+      const isInputLike = isInputLikeElement(target);
 
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
@@ -151,6 +128,6 @@ export function useAppEffects(args: UseAppEffectsArgs) {
     args.saveWorkflow,
     args.serverModalOpen,
     args.transferModalOpen,
-    args.viewMode,
+    args.isEditorRoute,
   ]);
 }

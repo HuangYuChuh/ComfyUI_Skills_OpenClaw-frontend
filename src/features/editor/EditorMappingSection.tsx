@@ -1,4 +1,6 @@
+import { CheckboxField } from "../../components/ui/CheckboxField";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { TextField } from "../../components/ui/TextField";
 import { MappingNodeCard } from "./MappingNodeCard";
 import type { EditorViewProps } from "./types";
 
@@ -46,10 +48,10 @@ export function EditorMappingSection(props: EditorMappingSectionProps) {
 
       <div className="mapping-toolbar">
         <div className="mapping-toolbar-top">
-          <input
+          <TextField
             ref={props.searchInputRef}
             id="mapping-search"
-            className="input-field"
+            fieldClassName="mapping-search-field"
             value={props.filters.query}
             onChange={(event) => props.onFilterChange({ query: event.target.value })}
             placeholder={props.t("mapping_search_placeholder")}
@@ -79,24 +81,20 @@ export function EditorMappingSection(props: EditorMappingSectionProps) {
           />
         </div>
         <div className="mapping-toolbar-bottom">
-          <label className="checkbox-inline mapping-exposed-only-label" htmlFor="mapping-exposed-only">
-            <input
-              id="mapping-exposed-only"
-              type="checkbox"
-              checked={props.filters.exposedOnly}
-              onChange={(event) => props.onFilterChange({ exposedOnly: event.target.checked })}
-            />
-            <span>{props.t("mapping_exposed_only")}</span>
-          </label>
-          <label className="checkbox-inline mapping-exposed-only-label" htmlFor="mapping-required-only">
-            <input
-              id="mapping-required-only"
-              type="checkbox"
-              checked={props.filters.requiredOnly}
-              onChange={(event) => props.onFilterChange({ requiredOnly: event.target.checked })}
-            />
-            <span>{props.t("mapping_required_only")}</span>
-          </label>
+          <CheckboxField
+            id="mapping-exposed-only"
+            className="mapping-exposed-only-label"
+            checked={props.filters.exposedOnly}
+            onChange={(event) => props.onFilterChange({ exposedOnly: event.target.checked })}
+            label={props.t("mapping_exposed_only")}
+          />
+          <CheckboxField
+            id="mapping-required-only"
+            className="mapping-exposed-only-label"
+            checked={props.filters.requiredOnly}
+            onChange={(event) => props.onFilterChange({ requiredOnly: event.target.checked })}
+            label={props.t("mapping_required_only")}
+          />
           <div className="mapping-toolbar-actions">
             <button type="button" className="btn btn-secondary" onClick={props.onApplyRecommended}>{props.t("mapping_apply_recommended")}</button>
             <button type="button" className="btn btn-secondary" onClick={() => props.onExposeVisible(true)}>{props.t("mapping_expose_visible")}</button>

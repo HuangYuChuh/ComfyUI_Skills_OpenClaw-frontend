@@ -190,6 +190,7 @@ export const enMessages = {
   add_server_panel_title: "Add New Server",
   add_server_modal_title: "Add Server",
   edit_server_modal_title: "Edit Server",
+  server_import_after_create: "Import all from ComfyUI after save",
   save_and_connect: "Save and Connect",
   save_server_changes: "Save Changes",
   create_first_server: "Create First Server",

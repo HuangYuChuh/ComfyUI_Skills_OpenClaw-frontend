@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { CheckboxField } from "./CheckboxField";
 import { Modal } from "./Modal";
 
 interface ConfirmDialogProps {
@@ -40,14 +41,12 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
     >
       <p className="confirm-modal-message">{props.message}</p>
       {props.checkboxLabel ? (
-        <label className="checkbox-inline confirm-modal-checkbox">
-          <input
-            type="checkbox"
-            checked={Boolean(props.checkboxChecked)}
-            onChange={(event) => props.onCheckboxChange?.(event.target.checked)}
-          />
-          <span>{props.checkboxLabel}</span>
-        </label>
+        <CheckboxField
+          checked={Boolean(props.checkboxChecked)}
+          className="confirm-modal-checkbox"
+          onChange={(event) => props.onCheckboxChange?.(event.target.checked)}
+          label={props.checkboxLabel}
+        />
       ) : null}
     </Modal>
   );

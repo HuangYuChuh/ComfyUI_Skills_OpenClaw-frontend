@@ -1,15 +1,12 @@
 import { useMemo, useRef } from "react";
+import { CustomSelect } from "../../components/ui/CustomSelect";
+import { FieldShell } from "../../components/ui/FieldShell";
 import { Modal } from "../../components/ui/Modal";
+import { SwitchField } from "../../components/ui/SwitchField";
+import { TextAreaField } from "../../components/ui/TextAreaField";
+import { TextField } from "../../components/ui/TextField";
 import type { RunWorkflowResponseDto } from "../../types/api";
-
-export interface RunWorkflowParam {
-  field?: string;
-  type?: string;
-  required?: boolean;
-  description?: string;
-  default?: unknown;
-  choices?: unknown[];
-}
+import type { RunWorkflowParam } from "./types";
 
 interface RunWorkflowModalProps {
   open: boolean;
@@ -71,55 +68,56 @@ export function RunWorkflowModal(props: RunWorkflowModalProps) {
             const showTextarea = type === "string" && isPromptLike(key, param, value);
 
             return (
-              <div key={key} className="form-group run-workflow-field">
-                <label htmlFor={`run-param-${key}`}>
-                  {key}
-                  {param.required ? <span className="run-workflow-required">*</span> : null}
-                </label>
-                {param.description ? <p className="run-workflow-help">{param.description}</p> : null}
+              <FieldShell
+                key={key}
+                label={key}
+                htmlFor={`run-param-${key}`}
+                helpText={param.description}
+                required={param.required}
+                className="run-workflow-field"
+              >
                 {choices.length > 0 ? (
-                  <select
+                  <CustomSelect
                     id={`run-param-${key}`}
-                    className="input-field"
                     value={String(value ?? "")}
-                    onChange={(event) => props.onChange(key, event.target.value)}
-                  >
-                    {!param.required ? <option value="">{props.t("run_workflow_optional_empty")}</option> : null}
-                    {choices.map((choice) => (
-                      <option key={`${key}-${String(choice)}`} value={String(choice)}>
-                        {String(choice)}
-                      </option>
-                    ))}
-                  </select>
+                    className="is-run-workflow-select"
+                    ariaLabel={key}
+                    onChange={(nextValue) => props.onChange(key, nextValue)}
+                    options={[
+                      ...(!param.required ? [{ value: "", label: props.t("run_workflow_optional_empty") }] : []),
+                      ...choices.map((choice) => ({
+                        value: String(choice),
+                        label: String(choice),
+                      })),
+                    ]}
+                  />
                 ) : type === "boolean" ? (
-                  <label className="checkbox-inline">
-                    <input
-                      id={`run-param-${key}`}
-                      type="checkbox"
-                      checked={Boolean(value)}
-                      onChange={(event) => props.onChange(key, event.target.checked)}
-                    />
-                    <span>{props.t("run_workflow_boolean_true")}</span>
-                  </label>
-                ) : showTextarea ? (
-                  <textarea
+                  <SwitchField
                     id={`run-param-${key}`}
-                    className="input-field run-workflow-textarea"
+                    className="run-workflow-switch"
+                    checked={Boolean(value)}
+                    onChange={(event) => props.onChange(key, event.target.checked)}
+                    label={props.t("run_workflow_boolean_true")}
+                  />
+                ) : showTextarea ? (
+                  <TextAreaField
+                    id={`run-param-${key}`}
+                    fieldClassName="run-workflow-textarea"
                     value={String(value ?? "")}
                     onChange={(event) => props.onChange(key, event.target.value)}
                     rows={5}
                   />
                 ) : (
-                  <input
+                  <TextField
                     id={`run-param-${key}`}
-                    className="input-field"
+                    fieldClassName="run-workflow-input"
                     type={type === "int" || type === "float" ? "number" : "text"}
                     step={type === "float" ? "any" : undefined}
                     value={String(value ?? "")}
                     onChange={(event) => props.onChange(key, event.target.value)}
                   />
                 )}
-              </div>
+              </FieldShell>
             );
           })}
         </div>

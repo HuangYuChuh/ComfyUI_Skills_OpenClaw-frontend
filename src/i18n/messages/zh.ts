@@ -190,6 +190,7 @@ export const zhMessages = {
   add_server_panel_title: "添加新服务器",
   add_server_modal_title: "添加服务器",
   edit_server_modal_title: "编辑服务器",
+  server_import_after_create: "保存后从 ComfyUI 全量导入",
   save_and_connect: "保存并连接",
   save_server_changes: "保存修改",
   create_first_server: "创建第一个服务器",

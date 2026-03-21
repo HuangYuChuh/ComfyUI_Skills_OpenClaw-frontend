@@ -19,6 +19,14 @@
   --radius-lg: 1rem;
   --radius-md: 0.75rem;
   --radius-sm: 0.5rem;
+  --field-height: 48px;
+  --field-radius: 14px;
+  --field-border: rgba(148, 163, 184, 0.22);
+  --field-border-hover: rgba(225, 29, 72, 0.38);
+  --field-border-focus: rgba(251, 113, 133, 0.82);
+  --field-surface: linear-gradient(180deg, rgba(20, 24, 32, 0.94) 0%, rgba(11, 15, 21, 0.98) 100%);
+  --field-surface-hover: linear-gradient(180deg, rgba(27, 31, 40, 0.96) 0%, rgba(14, 18, 25, 0.99) 100%);
+  --field-placeholder: rgba(156, 163, 175, 0.78);
   --focus-ring: 0 0 0 3px rgba(225, 29, 72, 0.35);
   --space-1: 8px;
   --space-2: 12px;
@@ -68,39 +76,21 @@ textarea {
   font: inherit;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: var(--field-placeholder);
+}
+
 button,
 label[for],
 .upload-zone {
   -webkit-tap-highlight-color: transparent;
 }
 
-input[type="text"],
-input[type="password"],
-select,
-textarea,
-.input-field {
-  width: 100%;
-  min-height: 46px;
-  padding: 10px 14px;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
-  color: var(--text-main);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-input[type="text"]:focus,
-input[type="password"]:focus,
-select:focus,
-textarea:focus,
-.input-field:focus,
 button:focus-visible,
 .upload-zone:focus-visible,
-.toggle-switch input:focus-visible + .slider,
 .custom-select-trigger:focus-visible {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: var(--focus-ring);
 }
 
 .custom-select {
@@ -110,13 +100,27 @@ button:focus-visible,
 
 .custom-select-trigger {
   width: 100%;
-  min-height: 46px;
-  padding: 10px 38px 10px 14px;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
+  min-height: var(--field-height);
+  padding: 12px 40px 12px 14px;
+  border: 1px solid var(--field-border);
+  border-radius: var(--field-radius);
+  background: var(--field-surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   color: var(--text-main);
   text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.custom-select:hover .custom-select-trigger,
+.custom-select.is-open .custom-select-trigger {
+  border-color: var(--field-border-hover);
+  background: var(--field-surface-hover);
+}
+
+.custom-select-trigger:focus-visible,
+.custom-select.is-open .custom-select-trigger {
+  border-color: var(--field-border-focus);
+  box-shadow: var(--focus-ring), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .custom-select-value {
@@ -173,12 +177,252 @@ button:focus-visible,
   cursor: not-allowed;
 }
 
-label {
+.field-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.field-shell.is-no-margin {
+  margin-bottom: 0;
+}
+
+label,
+.field-label {
   display: block;
   margin-bottom: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.field-label-text {
+  min-width: 0;
+}
+
+.field-required {
+  color: #fb7185;
+}
+
+.field-help {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.field-control {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: var(--field-height);
+  border: 1px solid var(--field-border);
+  border-radius: var(--field-radius);
+  background: var(--field-surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.field-control:hover {
+  border-color: var(--field-border-hover);
+  background: var(--field-surface-hover);
+}
+
+.field-control:focus-within {
+  border-color: var(--field-border-focus);
+  box-shadow: var(--focus-ring), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.field-control.is-disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.field-input,
+.field-textarea {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  outline: none;
+}
+
+.field-input {
+  min-height: calc(var(--field-height) - 2px);
+  padding: 0 14px;
+}
+
+.field-textarea {
+  min-height: 120px;
+  padding: 13px 14px;
+  resize: vertical;
+}
+
+.field-control.has-trailing .field-input {
+  padding-right: 56px;
+}
+
+.field-control-trailing {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-field,
+.switch-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.checkbox-field.is-disabled,
+.switch-field.is-disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.checkbox-field-input,
+.switch-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkbox-field-control {
+  position: relative;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 7px;
+  background: rgba(15, 23, 42, 0.85);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.checkbox-field-control::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: #fff1f2;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.16s ease, width 0.16s ease, height 0.16s ease, border-radius 0.16s ease;
+}
+
+.checkbox-field:hover .checkbox-field-control {
+  border-color: rgba(251, 113, 133, 0.58);
+  box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.1);
+}
+
+.checkbox-field-input:focus-visible + .checkbox-field-control {
+  border-color: var(--field-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.checkbox-field-input:checked + .checkbox-field-control,
+.checkbox-field-input:indeterminate + .checkbox-field-control {
+  border-color: rgba(251, 113, 133, 0.74);
+  background: linear-gradient(180deg, rgba(225, 29, 72, 0.96), rgba(190, 24, 93, 0.9));
+}
+
+.checkbox-field-input:checked + .checkbox-field-control::after {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.checkbox-field-input:indeterminate + .checkbox-field-control::after {
+  width: 9px;
+  height: 2px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.checkbox-field-copy,
+.switch-field-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.checkbox-field-label,
+.switch-field-label {
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.checkbox-field-description,
+.switch-field-description {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.switch-field {
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.switch-field-control {
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 26px;
+}
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(71, 85, 105, 0.92), rgba(51, 65, 85, 0.96));
+  box-shadow: inset 0 1px 2px rgba(2, 6, 23, 0.44);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(226, 232, 240, 0.92));
+  box-shadow: 0 4px 10px rgba(2, 6, 23, 0.32);
+  transition: transform 0.2s ease;
+}
+
+.switch-field:hover .switch-track {
+  box-shadow: inset 0 1px 2px rgba(2, 6, 23, 0.44), 0 0 0 1px rgba(251, 113, 133, 0.1);
+}
+
+.switch-input:focus-visible + .switch-track {
+  box-shadow: var(--focus-ring), inset 0 1px 2px rgba(2, 6, 23, 0.44);
+}
+
+.switch-input:checked + .switch-track {
+  background: linear-gradient(180deg, rgba(225, 29, 72, 0.96), rgba(190, 24, 93, 0.92));
+}
+
+.switch-input:checked + .switch-track .switch-thumb {
+  transform: translateX(18px);
 }
 
 .label-with-help {
@@ -311,7 +555,7 @@ label {
   animation: fadeIn 0.3s ease-out;
 }
 
-.page-header {
+.app-header {
   display: flex;
   gap: 16px;
   align-items: center;

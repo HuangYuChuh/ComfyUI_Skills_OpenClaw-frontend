@@ -16,6 +16,7 @@ export interface CustomSelectOption {
 }
 
 interface CustomSelectProps {
+  id?: string;
   value: string;
   options: CustomSelectOption[];
   onChange: (value: string) => void;
@@ -41,6 +42,7 @@ function findEnabledOptionIndex(options: CustomSelectOption[], currentValue: str
 }
 
 export function CustomSelect({
+  id,
   value,
   options,
   onChange,
@@ -90,7 +92,7 @@ export function CustomSelect({
     }
 
     updatePosition();
-    const host = rootRef.current?.closest(".card, .page-header, .server-config-container");
+    const host = rootRef.current?.closest(".card, .app-header, .server-config-container");
     if (host instanceof HTMLElement) {
       clearHostClass();
       host.classList.add("custom-select-host-open");
@@ -183,6 +185,7 @@ export function CustomSelect({
   return (
     <div ref={rootRef} className={`custom-select ${open ? "is-open" : ""} ${disabled ? "is-disabled" : ""} ${className}`.trim()}>
       <button
+        id={id}
         ref={triggerRef}
         type="button"
         className="custom-select-trigger"

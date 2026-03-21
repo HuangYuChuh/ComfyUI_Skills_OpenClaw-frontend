@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { SectionPanel } from "../../components/layout/SectionPanel";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { SwitchField } from "../../components/ui/SwitchField";
+import { TextField } from "../../components/ui/TextField";
 import type { WorkflowSummaryDto } from "../../types/api";
+import { EditIcon, MoreIcon, TrashIcon, UploadIcon } from "./components/WorkflowIcons";
 
 interface WorkflowManagerProps {
   workflows: WorkflowSummaryDto[];
@@ -11,8 +15,6 @@ interface WorkflowManagerProps {
   onSortChange: (value: string) => void;
   onCreateWorkflow: () => void;
   onCreateWorkflowFromFile: (file: File | null) => void;
-  onImportLocalFiles: () => void;
-  onImportLocalFolder: () => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
   onRunWorkflow: (workflow: WorkflowSummaryDto) => void;
   onOpenWorkflowHistory: (workflow: WorkflowSummaryDto) => void;
@@ -20,67 +22,7 @@ interface WorkflowManagerProps {
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
-  bulkImportBusy: boolean;
-  importingLocal: boolean;
   t: (key: string, vars?: Record<string, string | number>) => string;
-}
-
-function EditIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className="icon icon-tabler icons-tabler-outline icon-tabler-edit"
-    >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-      <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
-      <path d="M16 5l3 3" />
-    </svg>
-  );
-}
-
-function MoreIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className="icon icon-tabler icons-tabler-outline icon-tabler-dots-vertical"
-    >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-      <path d="M11 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-      <path d="M11 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-    </svg>
-  );
-}
-
-function UploadIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className="icon icon-tabler icons-tabler-outline icon-tabler-upload"
-    >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
-      <path d="M7 9l5 -5l5 5" />
-      <path d="M12 4l0 12" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className="icon icon-tabler icons-tabler-outline icon-tabler-trash"
-    >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M4 7l16 0" />
-      <path d="M10 11l0 6" />
-      <path d="M14 11l0 6" />
-      <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-      <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-    </svg>
-  );
 }
 
 export function WorkflowManager(props: WorkflowManagerProps) {
@@ -128,39 +70,21 @@ export function WorkflowManager(props: WorkflowManagerProps) {
   ], [props.t]);
 
   return (
-    <section className="card" aria-labelledby="workflow-manager-title">
-      <div className="section-header panel-toolbar">
-        <div className="panel-title-wrap">
-          <h2 id="workflow-manager-title" className="card-title">{props.t("workflow_manager")}</h2>
-        </div>
-        <div className="panel-actions">
-          {props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta">{summary}</p> : null}
-          <button
-            type="button"
-            className="btn btn-secondary panel-action-btn"
-            onClick={props.onImportLocalFiles}
-            disabled={props.bulkImportBusy}
-          >
-            {props.importingLocal ? props.t("bulk_import_loading") : props.t("import_local_files")}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary panel-action-btn"
-            onClick={props.onImportLocalFolder}
-            disabled={props.bulkImportBusy}
-          >
-            {props.importingLocal ? props.t("bulk_import_loading") : props.t("import_local_folder")}
-          </button>
-          <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onCreateWorkflow}>
-            {props.t("register_new_short")}
-          </button>
-        </div>
-      </div>
+    <SectionPanel
+      title={props.t("workflow_manager")}
+      titleId="workflow-manager-title"
+      meta={props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta">{summary}</p> : null}
+      actions={(
+        <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onCreateWorkflow}>
+          {props.t("register_new_short")}
+        </button>
+      )}
+    >
 
       <div className="workflow-toolbar">
-        <input
+        <TextField
           id="workflow-search"
-          className="input-field"
+          fieldClassName="workflow-search-field"
           value={props.search}
           onChange={(event) => props.onSearchChange(event.target.value)}
           placeholder={props.t("workflow_search_placeholder")}
@@ -283,22 +207,20 @@ export function WorkflowManager(props: WorkflowManagerProps) {
               ) : null}
 
               <div className="workflow-status-toggle">
-                <label className="toggle-inline" aria-label={props.t("toggle_workflow", { id: workflow.id })}>
-                  <span className={`workflow-enabled-label ${workflow.enabled ? "status-on" : "status-off"}`}>
-                    {workflow.enabled ? props.t("wf_enabled") : props.t("wf_disabled")}
-                  </span>
-                  <div className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={workflow.enabled}
-                      onChange={(event) => {
-                        setOpenMenuId(null);
-                        props.onToggleWorkflow(workflow, event.target.checked);
-                      }}
-                    />
-                    <span className="slider" />
-                  </div>
-                </label>
+                <SwitchField
+                  ariaLabel={props.t("toggle_workflow", { id: workflow.id })}
+                  checked={workflow.enabled}
+                  className="workflow-toggle-field"
+                  label={(
+                    <span className={`workflow-enabled-label ${workflow.enabled ? "status-on" : "status-off"}`}>
+                      {workflow.enabled ? props.t("wf_enabled") : props.t("wf_disabled")}
+                    </span>
+                  )}
+                  onChange={(event) => {
+                    setOpenMenuId(null);
+                    props.onToggleWorkflow(workflow, event.target.checked);
+                  }}
+                />
               </div>
 
               <button
@@ -382,6 +304,6 @@ export function WorkflowManager(props: WorkflowManagerProps) {
           </article>
         ))}
       </div>
-    </section>
+    </SectionPanel>
   );
 }

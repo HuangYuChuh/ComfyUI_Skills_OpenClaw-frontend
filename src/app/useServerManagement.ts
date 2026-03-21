@@ -67,7 +67,10 @@ export function useServerManagement(args: UseServerManagementArgs) {
     setServerModalOpen(true);
   }
 
-  async function handleSubmitServerModal() {
+  async function handleSubmitServerModal(
+    importAfterCreate = false,
+    onImportAllFromComfyUI?: (serverId?: string) => Promise<void>,
+  ) {
     const errorMessage = validateServerForm(serverForm, serverModalMode, args.t);
     if (errorMessage) {
       args.pushToast("error", errorMessage);
@@ -80,16 +83,21 @@ export function useServerManagement(args: UseServerManagementArgs) {
       if (serverModalMode === "add") {
         const created = await addServer(normalizedPayload);
         await loadInitialServers();
-        await args.refreshWorkflows();
         setCurrentServerId(created.server.id);
+        setServerModalOpen(false);
         args.pushToast("success", args.t("ok_add_server"));
+        if (importAfterCreate) {
+          await onImportAllFromComfyUI?.(created.server.id);
+        } else {
+          await args.refreshWorkflows();
+        }
       } else if (targetServerId) {
         await updateServer(targetServerId, normalizedPayload);
         await loadInitialServers();
         await args.refreshWorkflows();
+        setServerModalOpen(false);
         args.pushToast("success", args.t("ok_save_cfg"));
       }
-      setServerModalOpen(false);
     } catch (error) {
       args.pushToast("error", error instanceof Error ? error.message : args.t("err_add_server"));
     }

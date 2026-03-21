@@ -33,6 +33,7 @@ const messages: Record<string, string> = {
   edit_server_modal_title: "Edit Server",
   add_server_modal_title: "Add Server",
   cancel: "Cancel",
+  server_import_after_create: "Import all from ComfyUI after save",
   save_server_changes: "Save changes",
   save_and_connect: "Save and Connect",
   server_id_label: "Server ID",
@@ -213,5 +214,65 @@ describe("ServerManager", () => {
     await user.click(screen.getByRole("button", { name: "Import All from ComfyUI" }));
 
     expect(onImportAllFromComfyUI).toHaveBeenCalledTimes(1);
+  });
+
+  it("submits the add modal with import enabled when the footer checkbox is checked", async () => {
+    const user = userEvent.setup();
+    const onSubmitModal = vi.fn();
+
+    render(
+      <ServerManager
+        servers={[]}
+        currentServerId={null}
+        onSelectServer={vi.fn()}
+        onToggleServer={vi.fn()}
+        onDeleteServer={vi.fn()}
+        onImportAllFromComfyUI={vi.fn()}
+        onOpenCreate={vi.fn()}
+        onOpenEdit={vi.fn()}
+        bulkImportBusy={false}
+        importingComfyUI={false}
+        modalOpen
+        modalMode="add"
+        form={{ ...defaultForm }}
+        onFormChange={vi.fn()}
+        onCloseModal={vi.fn()}
+        onSubmitModal={onSubmitModal}
+        t={t}
+      />,
+    );
+
+    await user.click(screen.getByLabelText("Import all from ComfyUI after save"));
+    await user.click(screen.getByRole("button", { name: "Save and Connect" }));
+
+    expect(onSubmitModal).toHaveBeenCalledWith(true);
+  });
+
+  it("only shows the import-after-save checkbox in add mode", async () => {
+    render(
+      <ServerManager
+        servers={[serverFixture]}
+        currentServerId={serverFixture.id}
+        onSelectServer={vi.fn()}
+        onToggleServer={vi.fn()}
+        onDeleteServer={vi.fn()}
+        onImportAllFromComfyUI={vi.fn()}
+        onOpenCreate={vi.fn()}
+        onOpenEdit={vi.fn()}
+        bulkImportBusy={false}
+        importingComfyUI={false}
+        modalOpen
+        modalMode="edit"
+        form={{ ...defaultForm, id: serverFixture.id, name: serverFixture.name, url: serverFixture.url }}
+        onFormChange={vi.fn()}
+        onCloseModal={vi.fn()}
+        onSubmitModal={vi.fn()}
+        t={t}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Import all from ComfyUI after save")).toBeNull();
+    });
   });
 });

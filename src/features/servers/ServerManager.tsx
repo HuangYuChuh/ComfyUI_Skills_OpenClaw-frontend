@@ -1,10 +1,22 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { SectionPanel } from "../../components/layout/SectionPanel";
+import { CheckboxField } from "../../components/ui/CheckboxField";
 import { CustomSelect } from "../../components/ui/CustomSelect";
+import { FieldShell } from "../../components/ui/FieldShell";
 import { Modal } from "../../components/ui/Modal";
+import { SwitchField } from "../../components/ui/SwitchField";
+import { TextField } from "../../components/ui/TextField";
 import { getServerStatus, testServerConnection } from "../../services/servers";
 import type { SaveServerPayload, ServerDto } from "../../types/api";
-
-const DEFAULT_COMFYUI_URL = "http://127.0.0.1:8188";
+import { EditIcon, StatusDot, TrashIcon } from "./components/ServerManagerParts";
+import {
+  DEFAULT_COMFYUI_URL,
+  buildServerOptions,
+  getCurrentServerWarning,
+  getSelectedServerLabel,
+  getServerStatusLabel,
+  type ServerRunStatus,
+} from "./utils/serverManager";
 
 interface ServerManagerProps {
   title?: string;
@@ -24,67 +36,15 @@ interface ServerManagerProps {
   form: SaveServerPayload;
   onFormChange: (next: SaveServerPayload) => void;
   onCloseModal: () => void;
-  onSubmitModal: () => void;
+  onSubmitModal: (importAfterCreate?: boolean) => void | Promise<void>;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
-function EditIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className="lucide lucide-pencil"
-    >
-      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-      <path d="m15 5 4 4" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    >
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-    </svg>
-  );
-}
-
-function StatusDot({ status }: { status: "online" | "offline" | "checking" }) {
-  let color = "#a3a3a3";
-  if (status === "online") color = "#22c55e";
-  else if (status === "offline") color = "#ef4444";
-  return (
-    <span
-      title={status}
-      style={{
-        display: "inline-block",
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        backgroundColor: color,
-        marginRight: 6,
-        flexShrink: 0,
-        animation: status === "checking" ? "pulse 1.5s infinite" : undefined,
-      }}
-    />
-  );
-}
-
-type ServerRunStatus = "online" | "offline" | "checking";
-
 export function ServerManager(props: ServerManagerProps) {
   const currentServer = props.servers.find((server) => server.id === props.currentServerId) || null;
-  const currentServerWarning = currentServer?.unsupported
-    ? props.t("server_unsupported_reason", { type: currentServer.server_type || "unknown" })
-    : "";
-  const selectedServerLabel = currentServer?.name || currentServer?.id || "";
-  const serverOptions = props.servers.map((server) => ({
-    value: server.id,
-    label: `${server.name || server.id}${server.unsupported ? ` ${props.t("server_unsupported_short")}` : ""}`,
-  }));
+  const currentServerWarning = getCurrentServerWarning(currentServer, props.t);
+  const selectedServerLabel = getSelectedServerLabel(currentServer);
+  const serverOptions = buildServerOptions(props.servers, props.t);
   const serverIdInputRef = useRef<HTMLInputElement | null>(null);
   const serverNameInputRef = useRef<HTMLInputElement | null>(null);
   const hasSeededDefaultUrlRef = useRef(false);
@@ -92,6 +52,7 @@ export function ServerManager(props: ServerManagerProps) {
   const [serverStatus, setServerStatus] = useState<ServerRunStatus>("checking");
   const [showAuth, setShowAuth] = useState(false);
   const [testResult, setTestResult] = useState<{ state: "idle" | "testing" | "online" | "offline"; message?: string }>({ state: "idle" });
+  const [importAfterCreate, setImportAfterCreate] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -130,6 +91,12 @@ export function ServerManager(props: ServerManagerProps) {
     }
   }, [props.form, props.modalMode, props.modalOpen, props.onFormChange]);
 
+  useEffect(() => {
+    if (!props.modalOpen || props.modalMode !== "add") {
+      setImportAfterCreate(false);
+    }
+  }, [props.modalMode, props.modalOpen]);
+
   function update<K extends keyof SaveServerPayload>(key: K, value: SaveServerPayload[K]) {
     props.onFormChange({ ...props.form, [key]: value });
   }
@@ -138,10 +105,7 @@ export function ServerManager(props: ServerManagerProps) {
     return (event: ChangeEvent<HTMLInputElement>) => update(key, event.target.value as SaveServerPayload[K]);
   }
 
-  function statusLabel(): string {
-    if (serverStatus === "checking") return "...";
-    return props.t(serverStatus === "online" ? "server_status_online" : "server_status_offline");
-  }
+  const statusLabel = getServerStatusLabel(serverStatus, props.t);
 
   async function handleTestConnection() {
     const url = (props.form.url || "").trim();
@@ -158,17 +122,18 @@ export function ServerManager(props: ServerManagerProps) {
   }
 
   return (
-    <section className="card" aria-labelledby="server-manager-title">
-      <div className="section-header panel-toolbar">
-        <div className="panel-title-wrap">
-          <h2 id="server-manager-title" className="card-title">{props.t("server_manager")}</h2>
-        </div>
-        <div className="panel-actions">
+    <SectionPanel
+      title={props.t("server_manager")}
+      titleId="server-manager-title"
+      actions={(
+        <>
           {currentServer ? (
             <button
               type="button"
               className="btn btn-secondary panel-action-btn"
-              onClick={props.onImportAllFromComfyUI}
+              onClick={() => {
+                props.onImportAllFromComfyUI();
+              }}
               disabled={props.bulkImportBusy}
             >
               {props.importingComfyUI ? props.t("bulk_import_loading") : props.t("import_all_from_comfyui")}
@@ -177,9 +142,9 @@ export function ServerManager(props: ServerManagerProps) {
           <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onOpenCreate}>
             {props.t("add_server_toggle")}
           </button>
-        </div>
-      </div>
-
+        </>
+      )}
+    >
       {props.servers.length === 0 ? (
         <div className="server-empty-state">
           <p className="section-meta">{props.t("no_servers")}</p>
@@ -195,7 +160,7 @@ export function ServerManager(props: ServerManagerProps) {
                 <StatusDot status={serverStatus} />
                 {props.t("current_server_title")}
                 <span style={{ fontSize: "0.85em", opacity: 0.7 }}>
-                  ({statusLabel()})
+                  ({statusLabel})
                 </span>
               </span>
               <div className="server-selector-wrapper">
@@ -220,19 +185,17 @@ export function ServerManager(props: ServerManagerProps) {
               <div id="current-server-actions" className="server-header-controls">
                 <div className="server-status-toggle">
                   {/* Agent visibility toggle */}
-                  <label className="toggle-inline" title={props.t("server_agent_visibility_hint")} style={{ margin: 0 }}>
-                    <span className={currentServer.enabled ? "status-on" : "status-off"}>
-                      {currentServer.enabled ? props.t("server_agent_visible") : props.t("server_agent_hidden")}
-                    </span>
-                    <div className="toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={currentServer.enabled}
-                        onChange={(event) => props.onToggleServer(currentServer, event.target.checked)}
-                      />
-                      <span className="slider" />
-                    </div>
-                  </label>
+                  <SwitchField
+                    checked={currentServer.enabled}
+                    className="server-toggle-field"
+                    onChange={(event) => props.onToggleServer(currentServer, event.target.checked)}
+                    title={props.t("server_agent_visibility_hint")}
+                    label={(
+                      <span className={currentServer.enabled ? "status-on" : "status-off"}>
+                        {currentServer.enabled ? props.t("server_agent_visible") : props.t("server_agent_hidden")}
+                      </span>
+                    )}
+                  />
 
                   <button
                     type="button"
@@ -262,85 +225,107 @@ export function ServerManager(props: ServerManagerProps) {
         title={props.modalMode === "edit" ? props.t("edit_server_modal_title") : props.t("add_server_modal_title")}
         onClose={props.onCloseModal}
         initialFocusRef={props.modalMode === "edit" ? serverNameInputRef : serverIdInputRef}
+        footerStart={props.modalMode === "add" ? (
+          <CheckboxField
+            checked={importAfterCreate}
+            onChange={(event) => setImportAfterCreate(event.target.checked)}
+            className="server-modal-import-checkbox"
+            label={props.t("server_import_after_create")}
+          />
+        ) : null}
         actions={(
           <>
             <button type="button" className="btn btn-secondary" onClick={props.onCloseModal}>{props.t("cancel")}</button>
-            <button type="button" className="btn btn-primary" onClick={props.onSubmitModal}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                void props.onSubmitModal(props.modalMode === "add" ? importAfterCreate : false);
+              }}
+            >
               {props.modalMode === "edit" ? props.t("save_server_changes") : props.t("save_and_connect")}
             </button>
           </>
         )}
       >
         <div className="modal-grid">
-          <div id="modal-server-id-group" className="form-group form-group-half">
-            <label htmlFor="modal-server-id">{props.t("server_id_label")}</label>
-            <input
+          <FieldShell
+            label={props.t("server_id_label")}
+            htmlFor="modal-server-id"
+            helpText={props.t("server_id_help")}
+            className="form-group-half"
+          >
+            <TextField
               ref={serverIdInputRef}
               id="modal-server-id"
-              type="text"
-              className="input-field"
+              fieldClassName="modal-text-field"
               value={props.form.id ?? ""}
               disabled={props.modalMode === "edit"}
               onChange={onInputChange("id")}
               placeholder={props.t("new_server_id_placeholder")}
               autoComplete="off"
             />
-            <p className="form-help">{props.t("server_id_help")}</p>
-          </div>
-          <div className="form-group form-group-half">
-            <label htmlFor="modal-server-name">{props.t("server_name")}</label>
-            <input
+          </FieldShell>
+          <FieldShell
+            label={props.t("server_name")}
+            htmlFor="modal-server-name"
+            helpText={props.t("server_name_help")}
+            className="form-group-half"
+          >
+            <TextField
               ref={serverNameInputRef}
               id="modal-server-name"
-              type="text"
-              className="input-field"
+              fieldClassName="modal-text-field"
               value={props.form.name}
               onChange={onInputChange("name")}
               placeholder={props.t("new_server_name_placeholder")}
               autoComplete="off"
             />
-            <p className="form-help">{props.t("server_name_help")}</p>
-          </div>
-          <div className="form-group form-group-full">
-            <label htmlFor="modal-server-url">{props.t("server_url_label")}</label>
-            <input
+          </FieldShell>
+          <FieldShell
+            label={props.t("server_url_label")}
+            htmlFor="modal-server-url"
+            helpText={props.t("server_url_help_comfyui")}
+            className="form-group-full"
+          >
+            <TextField
               id="modal-server-url"
-              type="text"
-              className="input-field"
+              fieldClassName="modal-text-field"
               value={props.form.url}
               onChange={onInputChange("url")}
               placeholder={props.t("new_server_url_placeholder")}
               autoComplete="off"
             />
-            <p className="form-help">{props.t("server_url_help_comfyui")}</p>
-          </div>
-          <div className="form-group form-group-full">
-            <label htmlFor="modal-server-auth">{props.t("server_auth_label")}</label>
-            <div className="input-with-toggle">
-              <input
+          </FieldShell>
+          <FieldShell
+            label={props.t("server_auth_label")}
+            htmlFor="modal-server-auth"
+            helpText={props.t("server_auth_help")}
+            className="form-group-full"
+          >
+            <TextField
                 id="modal-server-auth"
                 type={showAuth ? "text" : "password"}
-                className="input-field"
+                fieldClassName="modal-text-field"
                 value={props.form.auth ?? ""}
                 onChange={onInputChange("auth")}
                 placeholder={props.t("server_auth_placeholder")}
                 autoComplete="off"
+                trailingAction={(
+                  <button
+                    type="button"
+                    className="btn-icon input-toggle-btn"
+                    onClick={() => setShowAuth((value) => !value)}
+                    aria-label={showAuth ? "Hide token" : "Show token"}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                      {!showAuth && <line x1="1" y1="1" x2="23" y2="23" />}
+                    </svg>
+                  </button>
+                )}
               />
-              <button
-                type="button"
-                className="btn-icon input-toggle-btn"
-                onClick={() => setShowAuth((value) => !value)}
-                aria-label={showAuth ? "Hide token" : "Show token"}
-                tabIndex={-1}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                  {!showAuth && <line x1="1" y1="1" x2="23" y2="23" />}
-                </svg>
-              </button>
-            </div>
-            <p className="form-help">{props.t("server_auth_help")}</p>
             <div className="form-test-connection">
               <button
                 type="button"
@@ -363,21 +348,23 @@ export function ServerManager(props: ServerManagerProps) {
                 </span>
               )}
             </div>
-          </div>
-          <div className="form-group form-group-full">
-            <label htmlFor="modal-server-output">{props.t("server_output_dir")}</label>
-            <input
+          </FieldShell>
+          <FieldShell
+            label={props.t("server_output_dir")}
+            htmlFor="modal-server-output"
+            className="form-group-full"
+          >
+            <TextField
               id="modal-server-output"
-              type="text"
-              className="input-field"
+              fieldClassName="modal-text-field"
               value={props.form.output_dir}
               onChange={onInputChange("output_dir")}
               placeholder="./outputs"
               autoComplete="off"
             />
-          </div>
+          </FieldShell>
         </div>
       </Modal>
-    </section>
+    </SectionPanel>
   );
 }

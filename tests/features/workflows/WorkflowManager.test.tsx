@@ -14,9 +14,6 @@ const messages: Record<string, string> = {
   workflow_sort_name_asc: "Name A-Z",
   workflow_sort_name_desc: "Name Z-A",
   workflow_sort_enabled: "Enabled first",
-  import_local_files: "Import Local Files",
-  import_local_folder: "Import Local Folder",
-  bulk_import_loading: "Importing...",
   workflow_search_placeholder: "Search workflows",
   register_new_short: "+ New Workflow",
   drag_upload: "Drag or click to upload ComfyUI workflow_api.json",
@@ -64,15 +61,11 @@ function renderWorkflowManager(overrides: Partial<ComponentProps<typeof Workflow
     onSortChange: vi.fn(),
     onCreateWorkflow: vi.fn(),
     onCreateWorkflowFromFile: vi.fn(),
-    onImportLocalFiles: vi.fn(),
-    onImportLocalFolder: vi.fn(),
     onEditWorkflow: vi.fn(),
     onDeleteWorkflow: vi.fn(),
     onToggleWorkflow: vi.fn(),
     onUploadWorkflowVersion: vi.fn(),
     onReorderWorkflows: vi.fn(),
-    bulkImportBusy: false,
-    importingLocal: false,
     t,
     ...overrides,
   };
@@ -188,16 +181,5 @@ describe("WorkflowManager", () => {
     });
 
     expect(props.onCreateWorkflowFromFile).toHaveBeenCalledWith(file);
-  });
-
-  it("triggers local file and folder import actions from the toolbar", async () => {
-    const user = userEvent.setup();
-    const { props } = renderWorkflowManager();
-
-    await user.click(screen.getByRole("button", { name: "Import Local Files" }));
-    await user.click(screen.getByRole("button", { name: "Import Local Folder" }));
-
-    expect(props.onImportLocalFiles).toHaveBeenCalledTimes(1);
-    expect(props.onImportLocalFolder).toHaveBeenCalledTimes(1);
   });
 });

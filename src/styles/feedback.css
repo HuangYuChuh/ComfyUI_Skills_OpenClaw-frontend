@@ -109,14 +109,6 @@
   }
 }
 
-.toggle-switch input:checked + .slider {
-  background: var(--primary);
-}
-
-.toggle-switch input:checked + .slider::before {
-  transform: translateX(20px);
-}
-
 #toast-container {
   position: fixed;
   right: 20px;
@@ -293,6 +285,10 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(180px, 0.9fr);
     align-items: start;
   }
+
+  .param-config > div > label:first-child {
+    min-height: 52px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -300,7 +296,7 @@
     padding: 52px 16px 40px;
   }
 
-  .page-header,
+  .app-header,
   .section-header,
   .workflow-item,
   .node-header {
