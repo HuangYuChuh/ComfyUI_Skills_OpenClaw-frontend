@@ -3,13 +3,10 @@ import { initPixelBlastBackground } from "../lib/pixelBlastBackground";
 import { safeWriteLocalStorage } from "../lib/storage";
 import type { ToastMessage } from "../components/ui/ToastViewport";
 import type { TranslateFn } from "./state";
-
-import {
-  checkSystemUpdate,
-  readStoredUpdateFeedback,
-  type StoredUpdateFeedback,
-  type UpdateCheckResult,
-} from "../services/update";
+import type { StoredUpdateFeedback, UpdateCheckResult } from "../services/update";
+import { useWorkflowAutoRefresh } from "./hooks/useWorkflowAutoRefresh";
+import { useUpdateBannerBootstrap } from "./hooks/useUpdateBannerBootstrap";
+import { isInputLikeElement } from "./utils/dom";
 
 interface UseAppEffectsArgs {
   language: string;
@@ -51,29 +48,15 @@ export function useAppEffects(args: UseAppEffectsArgs) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    args.setUpdateFeedback(readStoredUpdateFeedback());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useWorkflowAutoRefresh({
+    enabled: !args.isEditorRoute,
+    refreshWorkflows: args.refreshWorkflows,
+  });
 
-  useEffect(() => {
-    const feedback = readStoredUpdateFeedback();
-    if (feedback) {
-      args.setUpdateFeedback(feedback);
-      return;
-    }
-    const dismissed = sessionStorage.getItem("update-banner-dismissed");
-    if (dismissed) return;
-    const timer = setTimeout(() => {
-      checkSystemUpdate()
-        .then((result) => {
-          if (result.has_update) args.setUpdateInfo(result);
-        })
-        .catch(() => {});
-    }, 3000);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useUpdateBannerBootstrap({
+    setUpdateFeedback: args.setUpdateFeedback,
+    setUpdateInfo: args.setUpdateInfo,
+  });
 
   useEffect(() => initPixelBlastBackground({
     variant: "circle",
@@ -116,13 +99,7 @@ export function useAppEffects(args: UseAppEffectsArgs) {
       }
 
       const target = event.target as HTMLElement | null;
-      const isInputLike = Boolean(
-        target
-        && (target.tagName === "INPUT"
-          || target.tagName === "TEXTAREA"
-          || target.tagName === "SELECT"
-          || target.isContentEditable),
-      );
+      const isInputLike = isInputLikeElement(target);
 
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
