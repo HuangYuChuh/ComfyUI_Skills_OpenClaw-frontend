@@ -4,7 +4,12 @@ import { safeWriteLocalStorage } from "../lib/storage";
 import type { ToastMessage } from "../components/ui/ToastViewport";
 import type { TranslateFn } from "./state";
 
-import { checkSystemUpdate, type UpdateCheckResult } from "../services/update";
+import {
+  checkSystemUpdate,
+  readStoredUpdateFeedback,
+  type StoredUpdateFeedback,
+  type UpdateCheckResult,
+} from "../services/update";
 
 interface UseAppEffectsArgs {
   language: string;
@@ -14,6 +19,7 @@ interface UseAppEffectsArgs {
   refreshWorkflows: () => Promise<void>;
   pushToast: (type: "error", message: string) => void;
   setUpdateInfo: (info: UpdateCheckResult | null) => void;
+  setUpdateFeedback: (feedback: StoredUpdateFeedback | null) => void;
   t: TranslateFn;
   isEditorRoute: boolean;
   hasUnsavedChanges: boolean;
@@ -46,6 +52,16 @@ export function useAppEffects(args: UseAppEffectsArgs) {
   }, []);
 
   useEffect(() => {
+    args.setUpdateFeedback(readStoredUpdateFeedback());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const feedback = readStoredUpdateFeedback();
+    if (feedback) {
+      args.setUpdateFeedback(feedback);
+      return;
+    }
     const dismissed = sessionStorage.getItem("update-banner-dismissed");
     if (dismissed) return;
     const timer = setTimeout(() => {

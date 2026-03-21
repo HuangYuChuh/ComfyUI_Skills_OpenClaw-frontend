@@ -61,3 +61,11 @@ jobs:
             **Date:** ${{ github.event.head_commit.timestamp }}
 
             Run `scripts/update_frontend.sh` in the main repository to update.
+      - name: Notify main repository to sync frontend
+        env:
+          GH_TOKEN: ${{ secrets.MAIN_REPO_TOKEN }}
+        run: |
+          gh api repos/HuangYuChuh/ComfyUI_Skills_OpenClaw/dispatches \
+            -f event_type='frontend_release_published' \
+            -F client_payload[frontend_repo]="${{ github.repository }}" \
+            -F client_payload[frontend_sha]="${{ github.sha }}"

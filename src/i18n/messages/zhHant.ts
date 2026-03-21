@@ -194,5 +194,10 @@ export const zhHantMessages = {
   update_restarting: "正在重啟服務…",
   update_waiting: "等待服務恢復…",
   update_done: "更新完成，正在重新整理…",
+  update_success: "更新成功",
+  update_result_system: "主程式已從 {before} 更新到 {after}。",
+  update_result_frontend: "前端靜態檔案已從 {before} 更新到 {after}。",
+  update_result_generic: "最新更新已套用。",
+  update_wait_timeout: "更新已完成，但服務長時間沒有恢復。請手動重新整理頁面或重啟服務。",
   update_failed: "更新失敗",
 };

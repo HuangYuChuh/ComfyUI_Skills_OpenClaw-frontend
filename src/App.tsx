@@ -15,10 +15,11 @@ function AppContent() {
 
   return (
     <>
-      {controller.updateInfo?.has_update && (
+      {(controller.updateInfo?.has_update || controller.updateFeedback) && (
         <UpdateBanner
           localCommit={controller.updateInfo.local_commit || ""}
           remoteCommit={controller.updateInfo.remote_commit || ""}
+          feedback={controller.updateFeedback}
           onDismiss={controller.dismissUpdate}
           t={controller.t}
         />

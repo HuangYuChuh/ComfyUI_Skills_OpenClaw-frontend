@@ -1,21 +1,50 @@
 import { useState } from "react";
-import { performSystemUpdate, restartServer } from "../../services/update";
+import {
+  clearStoredUpdateFeedback,
+  performSystemUpdate,
+  persistUpdateFeedback,
+  restartServer,
+  type StoredUpdateFeedback,
+  type UpdateResult,
+} from "../../services/update";
 
 type Stage = "idle" | "updating" | "restarting" | "waiting" | "done" | "error";
+const RESTART_WAIT_TIMEOUT_MS = 45000;
 
 interface UpdateBannerProps {
   localCommit: string;
   remoteCommit: string;
+  feedback?: StoredUpdateFeedback | null;
   onDismiss: () => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
-export function UpdateBanner({ localCommit, remoteCommit, onDismiss, t }: UpdateBannerProps) {
+function buildSuccessSummary(result: Pick<UpdateResult, "component" | "commit_before" | "commit_after" | "message">, t: UpdateBannerProps["t"]) {
+  if (result.component === "system" && result.commit_before && result.commit_after) {
+    return t("update_result_system", { before: result.commit_before, after: result.commit_after });
+  }
+  if (result.component === "frontend" && result.commit_before && result.commit_after) {
+    return t("update_result_frontend", { before: result.commit_before, after: result.commit_after });
+  }
+  return result.message || t("update_result_generic");
+}
+
+function buildFeedbackMessage(feedback: StoredUpdateFeedback, t: UpdateBannerProps["t"]) {
+  if (feedback.status === "success") {
+    return buildSuccessSummary(feedback, t);
+  }
+  return feedback.message || t("update_failed");
+}
+
+export function UpdateBanner({ localCommit, remoteCommit, feedback, onDismiss, t }: UpdateBannerProps) {
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState("");
 
   async function handleUpdate() {
     setStage("updating");
+    setError("");
+    sessionStorage.removeItem("update-banner-dismissed");
+    clearStoredUpdateFeedback();
     try {
       const result = await performSystemUpdate();
       if (!result.success) {
@@ -23,37 +52,73 @@ export function UpdateBanner({ localCommit, remoteCommit, onDismiss, t }: Update
         setStage("error");
         return;
       }
+      persistUpdateFeedback({
+        status: "success",
+        component: result.component,
+        message: result.message,
+        commit_before: result.commit_before,
+        commit_after: result.commit_after,
+      });
       setStage("restarting");
       await restartServer();
       setStage("waiting");
-      // Poll until backend is back up
-      const poll = setInterval(async () => {
+      const startedAt = Date.now();
+      const poll = window.setInterval(async () => {
         try {
           const res = await fetch("/api/servers");
           if (res.ok) {
-            clearInterval(poll);
+            window.clearInterval(poll);
             setStage("done");
             setTimeout(() => window.location.reload(), 800);
+            return;
           }
         } catch {
           // still restarting, keep polling
         }
+        if (Date.now() - startedAt >= RESTART_WAIT_TIMEOUT_MS) {
+          window.clearInterval(poll);
+          clearStoredUpdateFeedback();
+          setError(t("update_wait_timeout"));
+          setStage("error");
+        }
       }, 1500);
     } catch (e) {
-      setError(String(e));
+      clearStoredUpdateFeedback();
+      setError(e instanceof Error ? e.message : String(e));
       setStage("error");
     }
   }
 
+  const bannerTone =
+    stage === "error" || feedback?.status === "error"
+      ? "is-error"
+      : feedback?.status === "success"
+        ? "is-success"
+        : "is-info";
+
+  const settledFeedback = stage === "idle" ? feedback : null;
+
   return (
-    <div className="update-banner" role="status">
+    <div className={`update-banner ${bannerTone}`} role="status">
       <span className="update-banner-icon">↑</span>
 
       <div className="update-banner-body">
-        {stage === "idle" && (
+        {stage === "idle" && !settledFeedback && (
           <p className="update-banner-message">
             {t("update_available", { local: localCommit, remote: remoteCommit })}
           </p>
+        )}
+        {stage === "idle" && settledFeedback?.status === "success" && (
+          <>
+            <p className="update-banner-message">{t("update_success")}</p>
+            <p className="update-banner-detail">{buildFeedbackMessage(settledFeedback, t)}</p>
+          </>
+        )}
+        {stage === "idle" && settledFeedback?.status === "error" && (
+          <>
+            <p className="update-banner-message update-banner-error">{t("update_failed")}</p>
+            <p className="update-banner-detail update-banner-error">{buildFeedbackMessage(settledFeedback, t)}</p>
+          </>
         )}
         {stage === "updating" && <p className="update-banner-message">{t("update_pulling")}</p>}
         {stage === "restarting" && <p className="update-banner-message">{t("update_restarting")}</p>}
@@ -67,7 +132,7 @@ export function UpdateBanner({ localCommit, remoteCommit, onDismiss, t }: Update
       </div>
 
       <div className="update-banner-actions">
-        {stage === "idle" && (
+        {stage === "idle" && !settledFeedback && (
           <button className="btn btn-primary btn-sm" onClick={handleUpdate}>
             {t("update_now")}
           </button>

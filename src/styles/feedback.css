@@ -15,6 +15,21 @@
   animation: slideDown 0.3s ease-out;
 }
 
+.update-banner.is-info {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.18), rgba(59, 130, 246, 0.10));
+  border-bottom: 1px solid rgba(59, 130, 246, 0.36);
+}
+
+.update-banner.is-success {
+  background: linear-gradient(90deg, rgba(5, 150, 105, 0.22), rgba(16, 185, 129, 0.12));
+  border-bottom: 1px solid rgba(16, 185, 129, 0.36);
+}
+
+.update-banner.is-error {
+  background: linear-gradient(90deg, rgba(190, 24, 93, 0.22), rgba(244, 63, 94, 0.10));
+  border-bottom: 1px solid rgba(244, 63, 94, 0.34);
+}
+
 .update-banner-icon {
   display: inline-flex;
   align-items: center;
@@ -35,6 +50,13 @@
   font-size: 0.88rem;
   line-height: 1.4;
   color: var(--text-main);
+}
+
+.update-banner-detail {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--text-muted);
 }
 
 .update-banner-body {
