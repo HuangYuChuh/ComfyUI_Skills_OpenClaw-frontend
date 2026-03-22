@@ -321,15 +321,37 @@ async function uploadWorkflowFile(fileName = 'workflow_api.json', content = work
   await user.upload(fileInput, file);
 }
 
-async function enterEditorWithUploadedWorkflow() {
+async function openCreateWorkflowPage() {
   const user = userEvent.setup();
   render(<App />);
 
   await screen.findByRole('button', { name: '+ New Workflow' });
   await user.click(screen.getByRole('button', { name: '+ New Workflow' }));
-  await user.type(screen.getByLabelText(/Workflow ID/i), 'wf-basic');
+  await screen.findByText('Choose a workflow import method');
+
+  return user;
+}
+
+async function enterEditorWithUploadedWorkflow() {
+  const user = await openCreateWorkflowPage();
   await uploadWorkflowFile();
-  await screen.findByText('Parsed Input Node List');
+  await screen.findByLabelText(/Workflow ID/i);
+  await user.clear(screen.getByLabelText(/Workflow ID/i));
+  await user.type(screen.getByLabelText(/Workflow ID/i), 'wf-basic');
+  await screen.findByRole('button', { name: 'Save Workflow and Mapping Schema' });
+
+  return user;
+}
+
+async function startComfyUiImportFromEditor() {
+  const user = await openCreateWorkflowPage();
+
+  await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+  const confirmDialog = await screen.findByRole('dialog');
+  expect(within(confirmDialog).getByText('Confirm ComfyUI Workflow Import')).toBeInTheDocument();
+
+  await user.click(within(confirmDialog).getByRole('button', { name: 'Start Import' }));
 
   return user;
 }
@@ -414,20 +436,16 @@ describe('App', () => {
   });
 
   it('switches from upload zone to mapping section after a workflow file is uploaded', async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    await openCreateWorkflowPage();
 
-    await screen.findByRole('button', { name: '+ New Workflow' });
-    await user.click(screen.getByRole('button', { name: '+ New Workflow' }));
-
-    expect(screen.getByText('Drag or click to upload ComfyUI workflow_api.json')).toBeInTheDocument();
+    expect(screen.getByText('Choose a workflow import method')).toBeInTheDocument();
     expect(document.getElementById('mapping-section')).toHaveClass('hidden');
 
-    await user.type(screen.getByLabelText(/Workflow ID/i), 'wf-basic');
     await uploadWorkflowFile();
 
-    await screen.findByText('Parsed Input Node List');
-    expect(screen.queryByText('Drag or click to upload ComfyUI workflow_api.json')).not.toBeInTheDocument();
+    await screen.findByLabelText(/Workflow ID/i);
+    await screen.findByRole('button', { name: 'Save Workflow and Mapping Schema' });
+    expect(screen.queryByText('Choose a workflow import method')).not.toBeInTheDocument();
     expect(document.getElementById('mapping-section')).not.toHaveClass('hidden');
   });
 
@@ -436,8 +454,8 @@ describe('App', () => {
     listWorkflowsMock.mockResolvedValue({ workflows: [] });
     render(<App />);
 
-    await screen.findByText('Drag or click to upload ComfyUI workflow_api.json');
-    const dropzone = screen.getByText('Drag or click to upload ComfyUI workflow_api.json').closest('label') as HTMLElement;
+    await screen.findByText('Choose a workflow import method');
+    const dropzone = screen.getByText('Choose a workflow import method').closest('label') as HTMLElement;
     const file = new File([workflowApiJson], 'workflow_api.json', { type: 'application/json' });
     Object.defineProperty(file, 'text', {
       value: async () => workflowApiJson,
@@ -449,7 +467,7 @@ describe('App', () => {
       },
     });
 
-    await screen.findByText('Parsed Input Node List');
+    await screen.findByRole('button', { name: 'Save Workflow and Mapping Schema' });
     expect(screen.getByDisplayValue('workflow_api')).toBeInTheDocument();
     expect(screen.queryByText('No workflow mappings configured yet.')).not.toBeInTheDocument();
   });
@@ -714,10 +732,7 @@ describe('App', () => {
   });
 
   it('imports all saved workflows from ComfyUI and shows the result report', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(await screen.findByRole('button', { name: 'Import All from ComfyUI' }));
+    await startComfyUiImportFromEditor();
 
     await waitFor(() => {
       expect(importWorkflowsFromComfyUIMock).toHaveBeenCalledWith('local');
@@ -731,11 +746,8 @@ describe('App', () => {
   });
 
   it('still shows the import report when refreshing workflows fails after a successful import', async () => {
-    const user = userEvent.setup();
     listWorkflowsMock.mockResolvedValueOnce({ workflows: [workflowFixture] }).mockRejectedValueOnce(new Error('Failed to load workflow list.'));
-    render(<App />);
-
-    await user.click(await screen.findByRole('button', { name: 'Import All from ComfyUI' }));
+    await startComfyUiImportFromEditor();
 
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('ComfyUI Import Report')).toBeInTheDocument();
@@ -776,26 +788,21 @@ describe('App', () => {
     expect(within(dialog).getByText('Local Import Report')).toBeInTheDocument();
   });
 
-  it('keeps local import actions hidden while a ComfyUI import is still running', async () => {
-    const user = userEvent.setup();
+  it('disables import actions while a ComfyUI import is still running', async () => {
     const deferredImport = createDeferred<typeof bulkImportReportFixture>();
     importWorkflowsFromComfyUIMock.mockReturnValueOnce(deferredImport.promise.then((report) => ({ status: 'success', report })));
-    render(<App />);
-
-    await user.click(await screen.findByRole('button', { name: 'Import All from ComfyUI' }));
+    await startComfyUiImportFromEditor();
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Import Local Files' })).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Import Local Folder' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Importing...' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Choose Folder' })).toBeDisabled();
     });
 
     deferredImport.resolve(bulkImportReportFixture);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Import All from ComfyUI' })).not.toBeDisabled();
-      expect(screen.queryByRole('button', { name: 'Import Local Files' })).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Import Local Folder' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Continue' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Choose Folder' })).not.toBeDisabled();
     });
   });
 

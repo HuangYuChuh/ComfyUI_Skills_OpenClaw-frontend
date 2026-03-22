@@ -312,8 +312,15 @@
   }
 
   .workflow-actions {
+    width: 100%;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: flex-start;
+  }
+
+  .workflow-toolbar-side {
+    width: 100%;
+    flex-wrap: wrap;
+    margin-left: 0;
   }
 
   .server-main-row,
@@ -333,8 +340,32 @@
 
   .server-status-toggle {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
+    flex-wrap: wrap;
     padding: 10px 12px;
+  }
+
+  .server-status-toggle > .switch-field {
+    flex: 1 1 100%;
+  }
+
+  .server-action-group {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .workflow-status-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .workflow-actions > .workflow-status-toggle {
+    flex: 1 1 100%;
+  }
+
+  .workflow-secondary-actions {
+    padding-left: 0;
+    border-left: 0;
   }
 
   .mapping-toolbar-actions {

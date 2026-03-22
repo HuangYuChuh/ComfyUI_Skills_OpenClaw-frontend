@@ -9,7 +9,7 @@
 .app-header {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 24px;
   align-items: flex-start;
   margin-bottom: 32px;
 }
@@ -33,14 +33,52 @@
   align-items: flex-start;
   gap: 6px;
   min-width: 0;
-  max-width: 760px;
+  max-width: 560px;
+}
+
+.app-header-copy h1 {
+  line-height: 1.08;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .app-header-controls {
   display: flex;
   align-items: flex-start;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 12px;
-  flex: 0 0 auto;
+  flex: 0 1 520px;
+  max-width: 100%;
+  margin-left: auto;
+}
+
+.dashboard-header .app-header-controls {
+  gap: 14px;
+  align-items: center;
+}
+
+.dashboard-header .app-header-actions {
+  gap: 8px;
+}
+
+.dashboard-header .app-header-actions > .panel-action-btn {
+  min-height: 40px;
+  padding-inline: 16px;
+}
+
+.dashboard-header .app-header-trailing {
+  align-self: stretch;
+}
+
+.dashboard-header .app-header-trailing .custom-select-trigger {
+  min-height: 56px;
+  border-radius: 16px;
+}
+
+.dashboard-header .app-header-trailing .custom-select.is-lang-select {
+  width: 156px;
 }
 
 .editor-back-btn {
@@ -60,7 +98,8 @@
 
 .app-header-subtitle {
   margin: 0;
-  max-width: 34ch;
+  max-width: none;
+  white-space: nowrap;
 }
 
 .editor-stepper {
@@ -149,14 +188,77 @@
 }
 
 .app-header-actions {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
 }
 
 .app-header-trailing {
   display: flex;
   align-items: flex-start;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.app-header-actions > .panel-action-btn {
+  white-space: nowrap;
+}
+
+.app-header-trailing .custom-select.is-lang-select {
+  width: 148px;
+}
+
+@media (max-width: 1080px) {
+  .app-header {
+    gap: 16px;
+    flex-direction: column;
+  }
+
+  .app-header-copy {
+    max-width: none;
+  }
+
+  .app-header-controls {
+    width: 100%;
+    justify-content: flex-start;
+    flex: none;
+    margin-left: 0;
+  }
+
+  .app-header-actions {
+    justify-content: flex-start;
+  }
+
+  .app-header-subtitle {
+    white-space: normal;
+  }
+
+  .dashboard-header .app-header-controls {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header-main {
+    width: 100%;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .app-header-copy {
+    width: 100%;
+  }
+
+  .app-header-copy h1 {
+    max-width: 100%;
+    font-size: clamp(1.9rem, 10vw, 2.8rem);
+  }
+
+  .dashboard-header .app-header-trailing .custom-select.is-lang-select {
+    width: 100%;
+  }
 }
 
 .logo-image {

@@ -24,7 +24,6 @@ const messages: Record<string, string> = {
   create_first_server: "Create First Server",
   current_server_title: "Current Server",
   select_server: "Select Server",
-  import_all_from_comfyui: "Import All from ComfyUI",
   bulk_import_loading: "Importing...",
   server_enabled: "Enabled",
   server_disabled: "Disabled",
@@ -185,10 +184,7 @@ describe("ServerManager", () => {
     expect(screen.getByLabelText("Server ID")).toHaveValue("");
   });
 
-  it("triggers the ComfyUI bulk import action from the header", async () => {
-    const user = userEvent.setup();
-    const onImportAllFromComfyUI = vi.fn();
-
+  it("does not render the legacy ComfyUI bulk import action in the server header", async () => {
     render(
       <ServerManager
         servers={[serverFixture]}
@@ -196,11 +192,8 @@ describe("ServerManager", () => {
         onSelectServer={vi.fn()}
         onToggleServer={vi.fn()}
         onDeleteServer={vi.fn()}
-        onImportAllFromComfyUI={onImportAllFromComfyUI}
         onOpenCreate={vi.fn()}
         onOpenEdit={vi.fn()}
-        bulkImportBusy={false}
-        importingComfyUI={false}
         modalOpen={false}
         modalMode="edit"
         form={{ ...defaultForm, id: serverFixture.id, name: serverFixture.name, url: serverFixture.url }}
@@ -211,9 +204,12 @@ describe("ServerManager", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Import All from ComfyUI" }));
+    await waitFor(() => {
+      expect(getServerStatusMock).toHaveBeenCalled();
+    });
 
-    expect(onImportAllFromComfyUI).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Import All from ComfyUI" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Add Server" })).toBeInTheDocument();
   });
 
   it("submits the add modal with import enabled when the footer checkbox is checked", async () => {

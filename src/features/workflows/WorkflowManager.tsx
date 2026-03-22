@@ -58,8 +58,11 @@ export function WorkflowManager(props: WorkflowManagerProps) {
   }, []);
 
   const summary = props.allWorkflowsForCurrentServer === props.workflows.length
-    ? props.t("workflow_count", { count: props.workflows.length })
-    : props.t("workflow_count_filtered", { visible: props.workflows.length, total: props.allWorkflowsForCurrentServer });
+    ? props.t(props.workflows.length === 1 ? "workflow_count_one" : "workflow_count", { count: props.workflows.length })
+    : props.t(props.allWorkflowsForCurrentServer === 1 ? "workflow_count_filtered_one" : "workflow_count_filtered", {
+      visible: props.workflows.length,
+      total: props.allWorkflowsForCurrentServer,
+    });
 
   const sortOptions = useMemo(() => [
     { value: "custom", label: props.t("workflow_sort_custom") },
@@ -73,7 +76,6 @@ export function WorkflowManager(props: WorkflowManagerProps) {
     <SectionPanel
       title={props.t("workflow_manager")}
       titleId="workflow-manager-title"
-      meta={props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta">{summary}</p> : null}
       actions={(
         <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onCreateWorkflow}>
           {props.t("register_new_short")}
@@ -89,13 +91,16 @@ export function WorkflowManager(props: WorkflowManagerProps) {
           onChange={(event) => props.onSearchChange(event.target.value)}
           placeholder={props.t("workflow_search_placeholder")}
         />
-        <CustomSelect
-          value={props.sort}
-          options={sortOptions}
-          ariaLabel={props.t("workflow_sort_custom")}
-          className="is-server-select"
-          onChange={props.onSortChange}
-        />
+        <div className="workflow-toolbar-side">
+          {props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta workflow-summary-chip">{summary}</p> : null}
+          <CustomSelect
+            value={props.sort}
+            options={sortOptions}
+            ariaLabel={props.t("workflow_sort_custom")}
+            className="is-server-select"
+            onChange={props.onSortChange}
+          />
+        </div>
       </div>
 
       <div className="workflow-list" aria-live="polite">
@@ -223,81 +228,85 @@ export function WorkflowManager(props: WorkflowManagerProps) {
                 />
               </div>
 
-              <button
-                type="button"
-                className="btn btn-secondary workflow-inline-btn"
-                onClick={() => {
-                  setOpenMenuId(null);
-                  props.onRunWorkflow(workflow);
-                }}
-              >
-                {props.t("run_workflow_short")}
-              </button>
-
-              {workflow.has_history ? (
+              <div className="workflow-primary-actions">
                 <button
                   type="button"
-                  className="btn btn-secondary workflow-inline-btn"
+                  className="btn btn-secondary workflow-inline-btn workflow-run-btn"
                   onClick={() => {
                     setOpenMenuId(null);
-                    props.onOpenWorkflowHistory(workflow);
+                    props.onRunWorkflow(workflow);
                   }}
                 >
-                  {props.t("workflow_history_short")}
+                  {props.t("run_workflow_short")}
                 </button>
-              ) : null}
+              </div>
 
-              <button
-                type="button"
-                className="btn btn-secondary btn-icon workflow-action-btn workflow-action-edit"
-                aria-label={props.t("edit_workflow", { id: workflow.id })}
-                onClick={() => {
-                  setOpenMenuId(null);
-                  props.onEditWorkflow(workflow);
-                }}
-              >
-                <EditIcon />
-              </button>
+              <div className="workflow-secondary-actions">
+                {workflow.has_history ? (
+                  <button
+                    type="button"
+                    className="btn btn-secondary workflow-inline-btn workflow-secondary-btn"
+                    onClick={() => {
+                      setOpenMenuId(null);
+                      props.onOpenWorkflowHistory(workflow);
+                    }}
+                  >
+                    {props.t("workflow_history_short")}
+                  </button>
+                ) : null}
 
-              <div className={`workflow-more ${openMenuId === workflow.id ? "is-open" : ""}`}>
                 <button
                   type="button"
-                  className="btn btn-secondary btn-icon workflow-action-btn workflow-more-trigger"
-                  aria-haspopup="menu"
-                  aria-expanded={openMenuId === workflow.id}
-                  aria-label={props.t("workflow_more_actions", { id: workflow.id })}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setOpenMenuId((current) => current === workflow.id ? null : workflow.id);
+                  className="btn btn-secondary btn-icon workflow-action-btn workflow-action-edit"
+                  aria-label={props.t("edit_workflow", { id: workflow.id })}
+                  onClick={() => {
+                    setOpenMenuId(null);
+                    props.onEditWorkflow(workflow);
                   }}
                 >
-                  <MoreIcon />
+                  <EditIcon />
                 </button>
-                <div className={`workflow-more-menu ${openMenuId === workflow.id ? "" : "hidden"}`} role="menu">
+
+                <div className={`workflow-more ${openMenuId === workflow.id ? "is-open" : ""}`}>
                   <button
                     type="button"
-                    className="workflow-more-item"
-                    role="menuitem"
-                    onClick={() => {
-                      setOpenMenuId(null);
-                      props.onUploadWorkflowVersion(workflow);
+                    className="btn btn-secondary btn-icon workflow-action-btn workflow-more-trigger"
+                    aria-haspopup="menu"
+                    aria-expanded={openMenuId === workflow.id}
+                    aria-label={props.t("workflow_more_actions", { id: workflow.id })}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setOpenMenuId((current) => current === workflow.id ? null : workflow.id);
                     }}
                   >
-                    <UploadIcon />
-                    <span>{props.t("upload_new_version")}</span>
+                    <MoreIcon />
                   </button>
-                  <button
-                    type="button"
-                    className="workflow-more-item workflow-more-item-danger"
-                    role="menuitem"
-                    onClick={() => {
-                      setOpenMenuId(null);
-                      props.onDeleteWorkflow(workflow);
-                    }}
-                  >
-                    <TrashIcon />
-                    <span>{props.t("delete")}</span>
-                  </button>
+                  <div className={`workflow-more-menu ${openMenuId === workflow.id ? "" : "hidden"}`} role="menu">
+                    <button
+                      type="button"
+                      className="workflow-more-item"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenuId(null);
+                        props.onUploadWorkflowVersion(workflow);
+                      }}
+                    >
+                      <UploadIcon />
+                      <span>{props.t("upload_new_version")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="workflow-more-item workflow-more-item-danger"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenuId(null);
+                        props.onDeleteWorkflow(workflow);
+                      }}
+                    >
+                      <TrashIcon />
+                      <span>{props.t("delete")}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

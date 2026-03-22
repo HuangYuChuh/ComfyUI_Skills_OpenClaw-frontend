@@ -16,7 +16,6 @@ interface MainShellProps {
   onSelectServer: (serverId: string) => void;
   onToggleServer: (server: ServerDto, enabled: boolean) => void;
   onDeleteServer: (server: ServerDto) => void;
-  onImportAllFromComfyUI: () => void;
   onOpenCreateServer: () => void;
   onOpenEditServer: (server: ServerDto) => void;
   onServerFormChange: (next: SaveServerPayload) => void;
@@ -33,8 +32,6 @@ interface MainShellProps {
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
-  bulkImportBusy: boolean;
-  importingComfyUI: boolean;
   t: TranslateFn;
 }
 
@@ -47,11 +44,8 @@ export function MainShell(props: MainShellProps) {
         onSelectServer={props.onSelectServer}
         onToggleServer={props.onToggleServer}
         onDeleteServer={props.onDeleteServer}
-        onImportAllFromComfyUI={props.onImportAllFromComfyUI}
         onOpenCreate={props.onOpenCreateServer}
         onOpenEdit={props.onOpenEditServer}
-        bulkImportBusy={props.bulkImportBusy}
-        importingComfyUI={props.importingComfyUI}
         modalOpen={props.serverModalOpen}
         modalMode={props.serverModalMode}
         form={props.serverForm}

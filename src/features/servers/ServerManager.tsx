@@ -26,11 +26,8 @@ interface ServerManagerProps {
   onSelectServer: (serverId: string) => void;
   onToggleServer: (server: ServerDto, enabled: boolean) => void;
   onDeleteServer: (server: ServerDto) => void;
-  onImportAllFromComfyUI: () => void;
   onOpenCreate: () => void;
   onOpenEdit: (server: ServerDto) => void;
-  bulkImportBusy: boolean;
-  importingComfyUI: boolean;
   modalOpen: boolean;
   modalMode: "add" | "edit";
   form: SaveServerPayload;
@@ -126,23 +123,9 @@ export function ServerManager(props: ServerManagerProps) {
       title={props.t("server_manager")}
       titleId="server-manager-title"
       actions={(
-        <>
-          {currentServer ? (
-            <button
-              type="button"
-              className="btn btn-secondary panel-action-btn"
-              onClick={() => {
-                props.onImportAllFromComfyUI();
-              }}
-              disabled={props.bulkImportBusy}
-            >
-              {props.importingComfyUI ? props.t("bulk_import_loading") : props.t("import_all_from_comfyui")}
-            </button>
-          ) : null}
-          <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onOpenCreate}>
-            {props.t("add_server_toggle")}
-          </button>
-        </>
+        <button type="button" className="btn btn-secondary panel-action-btn" onClick={props.onOpenCreate}>
+          {props.t("add_server_toggle")}
+        </button>
       )}
     >
       {props.servers.length === 0 ? (
@@ -156,13 +139,13 @@ export function ServerManager(props: ServerManagerProps) {
         <div className="server-config-container card card-nested">
           <div className="server-main-row">
             <div className="server-main-left">
-              <span className="section-meta" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <StatusDot status={serverStatus} />
-                {props.t("current_server_title")}
-                <span style={{ fontSize: "0.85em", opacity: 0.7 }}>
-                  ({statusLabel})
+              <div className="server-current-meta">
+                <span className="section-meta server-current-badge">
+                  <StatusDot status={serverStatus} />
+                  {props.t("current_server_title")}
+                  <span className="server-current-status">({statusLabel})</span>
                 </span>
-              </span>
+              </div>
               <div className="server-selector-wrapper">
                 {props.servers.length === 1 ? (
                   <div className="server-selector-static" aria-label={props.t("select_server")}>
@@ -183,8 +166,7 @@ export function ServerManager(props: ServerManagerProps) {
 
             {currentServer ? (
               <div id="current-server-actions" className="server-header-controls">
-                <div className="server-status-toggle">
-                  {/* Agent visibility toggle */}
+                <div className="server-status-toggle server-visibility-group">
                   <SwitchField
                     checked={currentServer.enabled}
                     className="server-toggle-field"
@@ -196,7 +178,8 @@ export function ServerManager(props: ServerManagerProps) {
                       </span>
                     )}
                   />
-
+                </div>
+                <div className="server-action-group">
                   <button
                     type="button"
                     className="btn btn-secondary btn-icon server-action-btn"

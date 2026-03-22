@@ -3,7 +3,8 @@ import { EditorWorkflowInfoCard } from "./EditorWorkflowInfoCard";
 import type { EditorViewProps } from "./types";
 
 export function EditorView(props: EditorViewProps) {
-  const editorStep = !props.workflowId ? 1 : (!props.hasWorkflow ? 2 : 3);
+  const hasBasicInfo = Boolean(props.workflowId.trim() && props.description.trim());
+  const editorStep = !props.hasWorkflow ? 1 : (!hasBasicInfo ? 2 : 3);
 
   return (
     <>
@@ -26,9 +27,13 @@ export function EditorView(props: EditorViewProps) {
         workflowId={props.workflowId}
         description={props.description}
         hasWorkflow={props.hasWorkflow}
+        currentServerLabel={props.currentServerLabel}
+        bulkImportBusy={props.bulkImportBusy}
         onWorkflowIdChange={props.onWorkflowIdChange}
         onDescriptionChange={props.onDescriptionChange}
         onUploadFile={props.onUploadFile}
+        onOpenFolderImport={props.onOpenFolderImport}
+        onImportAllFromComfyUI={props.onImportAllFromComfyUI}
         t={props.t}
       />
 

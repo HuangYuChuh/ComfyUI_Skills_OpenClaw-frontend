@@ -544,7 +544,7 @@ label,
 }
 
 .shell {
-  width: min(100%, 1080px);
+  width: min(100%, 1140px);
   margin: 0 auto;
   padding: calc(var(--space-6) + var(--space-5)) var(--space-4) 56px;
 }

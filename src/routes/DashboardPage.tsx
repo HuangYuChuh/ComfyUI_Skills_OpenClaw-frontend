@@ -16,7 +16,6 @@ function buildEditorPath(workflow: WorkflowSummaryDto) {
 
 export function DashboardPage({ controller }: DashboardPageProps) {
   const navigate = useNavigate();
-  const bulkImportBusy = controller.bulkImportState.loading;
 
   async function handleCreateWorkflow() {
     if (controller.createWorkflow()) {
@@ -41,6 +40,7 @@ export function DashboardPage({ controller }: DashboardPageProps) {
     <AppLayout
       header={(
         <AppHeader
+          className="dashboard-header"
           leading={(
             <div className="logo-frame" aria-hidden="true">
               <img className="logo-image" src={`${import.meta.env.BASE_URL}logo.png`} alt="ComfyUI OpenClaw logo" />
@@ -75,7 +75,6 @@ export function DashboardPage({ controller }: DashboardPageProps) {
         onSelectServer={controller.setCurrentServerId}
         onToggleServer={controller.handleToggleServer}
         onDeleteServer={controller.requestDeleteServer}
-        onImportAllFromComfyUI={controller.handleImportAllFromComfyUI}
         onOpenCreateServer={controller.handleAddServer}
         onOpenEditServer={controller.handleEditServer}
         onServerFormChange={controller.setServerForm}
@@ -92,8 +91,6 @@ export function DashboardPage({ controller }: DashboardPageProps) {
         onToggleWorkflow={controller.handleToggleWorkflow}
         onUploadWorkflowVersion={controller.handleUploadWorkflowVersion}
         onReorderWorkflows={controller.handleReorderWorkflows}
-        bulkImportBusy={bulkImportBusy}
-        importingComfyUI={controller.bulkImportState.loading && controller.bulkImportState.source === "comfyui"}
         t={controller.t}
       />
     </AppLayout>
