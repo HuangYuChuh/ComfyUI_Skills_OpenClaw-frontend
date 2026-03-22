@@ -84,6 +84,22 @@
   min-width: 0;
 }
 
+.server-current-meta {
+  display: flex;
+  align-items: center;
+}
+
+.server-current-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.server-current-status {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
 .server-main-left .section-meta {
   flex-shrink: 0;
   font-weight: 600;
@@ -106,6 +122,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 10px;
   flex-shrink: 0;
   margin-left: auto;
 }
@@ -124,10 +141,27 @@
 }
 
 .workflow-status-toggle {
-  border-radius: 6px;
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: 10px;
   border-color: rgba(148, 163, 184, 0.14);
   background: rgba(255, 255, 255, 0.08);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.server-visibility-group {
+  padding-inline: 10px;
+  min-width: 0;
+}
+
+.server-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .workflow-status-toggle:hover,
@@ -140,12 +174,28 @@
 .workflow-toggle-field {
   width: 100%;
   gap: 10px;
+  min-width: 0;
+}
+
+.workflow-status-toggle .workflow-toggle-field {
+  width: auto;
+  min-height: 42px;
+  align-items: center;
 }
 
 .server-toggle-field .switch-field-copy,
 .workflow-toggle-field .switch-field-copy {
   display: inline-flex;
   align-items: center;
+}
+
+.workflow-status-toggle .workflow-toggle-field .switch-field-copy {
+  height: 100%;
+  align-items: center;
+}
+
+.workflow-status-toggle .workflow-toggle-field .switch-field-control {
+  align-self: center;
 }
 
 .server-status-toggle .status-on,
@@ -303,34 +353,42 @@ body.modal-open {
   padding: 14px var(--space-4) 18px;
   border-top: 1px solid var(--card-border);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .modal-actions-leading,
 .modal-actions-trailing {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-1);
 }
 
 .modal-actions-leading {
+  flex: 1 1 280px;
   min-width: 0;
   margin-right: auto;
 }
 
 .modal-actions-trailing {
+  flex: 0 0 auto;
   justify-content: flex-end;
   flex-wrap: wrap;
 }
 
 .server-modal-import-checkbox {
+  width: 100%;
   min-height: 40px;
+  align-items: flex-start;
 }
 
 .server-modal-import-checkbox .checkbox-field-label {
   font-size: 0.94rem;
+}
+
+.server-modal-import-checkbox .checkbox-field-control {
+  margin-top: 2px;
 }
 
 .confirm-modal-message {

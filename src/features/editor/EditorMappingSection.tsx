@@ -31,7 +31,10 @@ type EditorMappingSectionProps = Pick<
 export function EditorMappingSection(props: EditorMappingSectionProps) {
   return (
     <section id="mapping-section" className={`card${props.hasWorkflow ? "" : " hidden"}`} aria-labelledby="mapping-title">
-      <h2 id="mapping-title" className="card-title">{props.t("parsed_input")}</h2>
+      <div className="editor-section-heading">
+        <h2 id="mapping-title" className="card-title">{props.t("editor_step_3")}</h2>
+        <p className="subtitle editor-section-hint">{props.t("editor_step_3_hint")}</p>
+      </div>
       {props.upgradeSummary ? (
         <div className="upgrade-summary-banner">
           <div className="upgrade-summary-title">{props.t("workflow_upgrade_ready")}</div>

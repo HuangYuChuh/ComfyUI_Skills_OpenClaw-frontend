@@ -1,5 +1,7 @@
 .app-header-actions {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12px;
 }
 
@@ -189,9 +191,18 @@
   .app-header-controls,
   .app-header-actions {
     width: 100%;
+    justify-content: stretch;
   }
 
   .app-header-actions > .btn {
+    width: 100%;
+  }
+
+  .app-header-trailing {
+    width: 100%;
+  }
+
+  .app-header-trailing .custom-select.is-lang-select {
     width: 100%;
   }
 

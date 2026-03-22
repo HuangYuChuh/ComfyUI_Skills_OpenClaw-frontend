@@ -7,6 +7,7 @@ interface AppHeaderProps {
   subtitle?: ReactNode;
   actions?: ReactNode;
   trailing?: ReactNode;
+  className?: string;
 }
 
 export function AppHeader({
@@ -16,9 +17,10 @@ export function AppHeader({
   subtitle,
   actions,
   trailing,
+  className = "",
 }: AppHeaderProps) {
   return (
-    <header className="app-header">
+    <header className={`app-header ${className}`.trim()}>
       <div className="app-header-main">
         {leading ? <div className="app-header-leading">{leading}</div> : null}
         <div className="app-header-copy">

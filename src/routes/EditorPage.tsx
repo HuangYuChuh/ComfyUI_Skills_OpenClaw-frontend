@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppHeader } from "../components/layout/AppHeader";
 import { AppLayout } from "../components/layout/AppLayout";
-import { LanguageSelect } from "../components/layout/LanguageSelect";
 import { EditorView } from "../features/editor/EditorView";
 import type { AppController } from "../app/useAppController";
 
@@ -17,7 +16,8 @@ export function EditorPage({ controller }: EditorPageProps) {
   const isEditRoute = Boolean(params.serverId && params.workflowId);
   const routeServerId = params.serverId ? decodeURIComponent(params.serverId) : null;
   const routeWorkflowId = params.workflowId ? decodeURIComponent(params.workflowId) : null;
-  const editorStep = !controller.editorState.workflowId ? 1 : (!controller.editorState.workflowData ? 2 : 3);
+  const hasWorkflowId = Boolean(controller.editorState.workflowId.trim());
+  const editorStep = !controller.editorState.workflowData ? 1 : (!hasWorkflowId ? 2 : 3);
 
   useEffect(() => {
     if (!isEditRoute || !routeServerId || !routeWorkflowId) {
@@ -80,10 +80,8 @@ export function EditorPage({ controller }: EditorPageProps) {
               <span aria-hidden="true">&larr;</span> <span>{controller.t("back")}</span>
             </button>
           )}
-          badge={`${controller.t("editor_step_1")} / ${controller.t("editor_step_2")} / ${controller.t("editor_step_3")}`}
           title={headerTitle}
           subtitle={headerSubtitle}
-          trailing={<LanguageSelect value={controller.language} onChange={controller.setLanguage} />}
         />
       )}
     >
@@ -97,6 +95,8 @@ export function EditorPage({ controller }: EditorPageProps) {
           description={controller.editorState.description}
           schemaParams={controller.editorState.schemaParams}
           hasWorkflow={Boolean(controller.editorState.workflowData)}
+          currentServerLabel={controller.currentServer?.name?.trim() || controller.currentServer?.id || null}
+          bulkImportBusy={controller.bulkImportState.loading}
           emptyStateMessageKey={controller.editorEmptyStateMessageKey}
           mode={controller.editorState.editingWorkflowId ? "edit" : "create"}
           editingWorkflowId={controller.editorState.editingWorkflowId}
@@ -111,6 +111,8 @@ export function EditorPage({ controller }: EditorPageProps) {
           onWorkflowIdChange={controller.handleWorkflowIdChange}
           onDescriptionChange={(value) => controller.setEditorState((current) => ({ ...current, description: value, hasUnsavedChanges: true }))}
           onUploadFile={controller.handleEditorUpload}
+          onOpenFolderImport={controller.handleOpenLocalImportFolder}
+          onImportAllFromComfyUI={() => void controller.handleImportAllFromComfyUI()}
           onSave={controller.handleSaveWorkflow}
           onFilterChange={(next) => controller.setEditorFilters((current) => ({ ...current, ...next }))}
           onResetFilters={() => controller.setEditorFilters({
