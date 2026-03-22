@@ -1,4 +1,5 @@
 import type {
+  BulkImportPreviewReportDto,
   BulkImportReportDto,
   ExecutionHistoryDetailDto,
   ExecutionHistorySummaryDto,
@@ -84,6 +85,12 @@ export function importWorkflowsFromComfyUI(serverId: string) {
   return requestJson<{ status: string; report: BulkImportReportDto }>(`/api/servers/${encodeURIComponent(serverId)}/workflows/import/comfyui`, {
     method: "POST",
   });
+}
+
+export function previewWorkflowsFromComfyUI(serverId: string) {
+  return requestJson<{ status: string; preview: BulkImportPreviewReportDto }>(
+    `/api/servers/${encodeURIComponent(serverId)}/workflows/import/comfyui/preview`,
+  );
 }
 
 export function importLocalWorkflows(serverId: string, files: LocalWorkflowImportFilePayload[]) {

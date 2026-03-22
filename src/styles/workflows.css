@@ -229,6 +229,13 @@ button:disabled,
   word-break: break-all;
 }
 
+.bulk-import-item-description {
+  color: rgba(226, 232, 240, 0.88);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
 .bulk-import-item-rename,
 .bulk-import-item-source,
 .bulk-import-item-reason {

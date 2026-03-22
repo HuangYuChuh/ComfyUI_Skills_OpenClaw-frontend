@@ -1,22 +1,29 @@
 import { useRef, useState } from "react";
-import { importLocalWorkflows, importWorkflowsFromComfyUI } from "../services/workflows";
-import type { BulkImportReportDto, LocalWorkflowImportFilePayload, ServerDto } from "../types/api";
+import { importLocalWorkflows, importWorkflowsFromComfyUI, previewWorkflowsFromComfyUI } from "../services/workflows";
+import type { BulkImportPreviewReportDto, BulkImportReportDto, LocalWorkflowImportFilePayload, ServerDto } from "../types/api";
 
 type BulkImportSource = "comfyui" | "local" | null;
+type BulkImportLoadingStage = "preview" | "import" | null;
 
 export interface BulkImportState {
   open: boolean;
   report: BulkImportReportDto | null;
+  previewOpen: boolean;
+  preview: BulkImportPreviewReportDto | null;
   source: BulkImportSource;
   loading: boolean;
+  loadingStage: BulkImportLoadingStage;
 }
 
 function initialBulkImportState(): BulkImportState {
   return {
     open: false,
     report: null,
+    previewOpen: false,
+    preview: null,
     source: null,
     loading: false,
+    loadingStage: null,
   };
 }
 
@@ -58,6 +65,17 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
     setBulkImportState(initialBulkImportState());
   }
 
+  function closeComfyUiImportPreview() {
+    setBulkImportState((current) => ({
+      ...current,
+      previewOpen: false,
+      preview: null,
+      loading: false,
+      loadingStage: null,
+      source: current.open ? current.source : null,
+    }));
+  }
+
   function ensureImportServerReady(explicitServerId?: string) {
     if (explicitServerId) {
       return explicitServerId;
@@ -95,8 +113,11 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
     setBulkImportState({
       open: true,
       report,
+      previewOpen: false,
+      preview: null,
       source,
       loading: false,
+      loadingStage: null,
     });
     pushSummaryToast(report);
   }
@@ -109,6 +130,44 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
     localImportFolderRef.current?.click();
   }
 
+  async function handlePreviewImportFromComfyUI(explicitServerId?: string) {
+    const serverId = ensureImportServerReady(explicitServerId);
+    if (!serverId) {
+      return;
+    }
+
+    const requestId = createRequest();
+    setBulkImportState((current) => ({
+      ...current,
+      source: "comfyui",
+      loading: true,
+      loadingStage: "preview",
+      previewOpen: false,
+      preview: null,
+    }));
+
+    try {
+      const response = await previewWorkflowsFromComfyUI(serverId);
+      if (!isCurrentRequest(requestId)) {
+        return;
+      }
+      setBulkImportState((current) => ({
+        ...current,
+        source: "comfyui",
+        loading: false,
+        loadingStage: null,
+        previewOpen: true,
+        preview: response.preview,
+      }));
+    } catch (error) {
+      if (!isCurrentRequest(requestId)) {
+        return;
+      }
+      setBulkImportState((current) => ({ ...current, loading: false, loadingStage: null }));
+      args.pushToast("error", getErrorMessage(error, args.t("err_bulk_import_comfyui_preview")));
+    }
+  }
+
   async function handleImportAllFromComfyUI(explicitServerId?: string) {
     const serverId = ensureImportServerReady(explicitServerId);
     if (!serverId) {
@@ -116,7 +175,13 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
     }
 
     const requestId = createRequest();
-    setBulkImportState((current) => ({ ...current, loading: true, source: "comfyui" }));
+    setBulkImportState((current) => ({
+      ...current,
+      loading: true,
+      loadingStage: "import",
+      source: "comfyui",
+      previewOpen: false,
+    }));
     try {
       const response = await importWorkflowsFromComfyUI(serverId);
       if (!isCurrentRequest(requestId)) {
@@ -127,7 +192,7 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
       if (!isCurrentRequest(requestId)) {
         return;
       }
-      setBulkImportState((current) => ({ ...current, loading: false }));
+      setBulkImportState((current) => ({ ...current, loading: false, loadingStage: null }));
       args.pushToast("error", getErrorMessage(error, args.t("err_bulk_import_comfyui")));
     }
   }
@@ -139,7 +204,7 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
     }
 
     const requestId = createRequest();
-    setBulkImportState((current) => ({ ...current, loading: true, source: "local" }));
+    setBulkImportState((current) => ({ ...current, loading: true, loadingStage: "import", source: "local" }));
     try {
       const payload = await Promise.all(files.map(async (file) => ({
         file_name: getFilePath(file) || file.name,
@@ -154,7 +219,7 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
       if (!isCurrentRequest(requestId)) {
         return;
       }
-      setBulkImportState((current) => ({ ...current, loading: false }));
+      setBulkImportState((current) => ({ ...current, loading: false, loadingStage: null }));
       args.pushToast("error", getErrorMessage(error, args.t("err_bulk_import_local")));
     }
   }
@@ -168,8 +233,10 @@ export function useBulkWorkflowImport(args: UseBulkWorkflowImportArgs) {
     localImportFilesRef,
     localImportFolderRef,
     closeBulkImportModal,
+    closeComfyUiImportPreview,
     handleOpenLocalImportFiles,
     handleOpenLocalImportFolder,
+    handlePreviewImportFromComfyUI,
     handleImportAllFromComfyUI,
     handleLocalImportFilesChange,
   };

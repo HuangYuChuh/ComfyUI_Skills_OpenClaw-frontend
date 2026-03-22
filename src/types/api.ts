@@ -108,6 +108,26 @@ export interface BulkImportReportDto {
   items: BulkImportItemDto[];
 }
 
+export interface BulkImportPreviewItemDto {
+  workflow_id: string;
+  final_workflow_id: string;
+  source_label: string;
+  description: string;
+  status: "ready" | "renamed" | "failed";
+  reason: string;
+}
+
+export interface BulkImportPreviewReportDto {
+  summary: {
+    ready: number;
+    renamed: number;
+    failed: number;
+    importable: number;
+    total: number;
+  };
+  items: BulkImportPreviewItemDto[];
+}
+
 export interface TogglePayload {
   enabled: boolean;
 }

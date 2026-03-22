@@ -19,6 +19,7 @@ const {
   getWorkflowHistoryEntryMock,
   deleteWorkflowHistoryEntryMock,
   clearWorkflowHistoryMock,
+  previewWorkflowsFromComfyUIMock,
   importWorkflowsFromComfyUIMock,
   importLocalWorkflowsMock,
   previewTransferExportMock,
@@ -42,6 +43,7 @@ const {
   getWorkflowHistoryEntryMock: vi.fn(),
   deleteWorkflowHistoryEntryMock: vi.fn(),
   clearWorkflowHistoryMock: vi.fn(),
+  previewWorkflowsFromComfyUIMock: vi.fn(),
   importWorkflowsFromComfyUIMock: vi.fn(),
   importLocalWorkflowsMock: vi.fn(),
   previewTransferExportMock: vi.fn(),
@@ -72,6 +74,7 @@ vi.mock('../src/services/workflows', () => ({
   getWorkflowHistoryEntry: getWorkflowHistoryEntryMock,
   deleteWorkflowHistoryEntry: deleteWorkflowHistoryEntryMock,
   clearWorkflowHistory: clearWorkflowHistoryMock,
+  previewWorkflowsFromComfyUI: previewWorkflowsFromComfyUIMock,
   importWorkflowsFromComfyUI: importWorkflowsFromComfyUIMock,
   importLocalWorkflows: importLocalWorkflowsMock,
 }));
@@ -311,6 +314,42 @@ const bulkImportReportFixture = {
   ],
 };
 
+const bulkImportPreviewFixture = {
+  summary: {
+    ready: 1,
+    renamed: 1,
+    failed: 1,
+    importable: 2,
+    total: 3,
+  },
+  items: [
+    {
+      workflow_id: 'portrait',
+      final_workflow_id: 'portrait',
+      source_label: 'workflows/portrait.json',
+      description: 'Portrait workflow',
+      status: 'ready' as const,
+      reason: '',
+    },
+    {
+      workflow_id: 'portrait',
+      final_workflow_id: 'portrait-2',
+      source_label: 'workflows/portrait-copy.json',
+      description: 'Portrait workflow copy',
+      status: 'renamed' as const,
+      reason: '',
+    },
+    {
+      workflow_id: '',
+      final_workflow_id: '',
+      source_label: 'broken.json',
+      description: '',
+      status: 'failed' as const,
+      reason: 'Invalid JSON file.',
+    },
+  ],
+};
+
 async function uploadWorkflowFile(fileName = 'workflow_api.json', content = workflowApiJson) {
   const fileInput = document.getElementById('file-upload') as HTMLInputElement;
   const file = new File([content], fileName, { type: 'application/json' });
@@ -346,12 +385,12 @@ async function enterEditorWithUploadedWorkflow() {
 async function startComfyUiImportFromEditor() {
   const user = await openCreateWorkflowPage();
 
-  await user.click(screen.getByRole('button', { name: 'Continue' }));
+  await user.click(screen.getByRole('button', { name: 'Scan Workflows' }));
 
   const confirmDialog = await screen.findByRole('dialog');
-  expect(within(confirmDialog).getByText('Confirm ComfyUI Workflow Import')).toBeInTheDocument();
+  expect(within(confirmDialog).getByText('Review workflows from current server')).toBeInTheDocument();
 
-  await user.click(within(confirmDialog).getByRole('button', { name: 'Start Import' }));
+  await user.click(within(confirmDialog).getByRole('button', { name: 'Import All' }));
 
   return user;
 }
@@ -390,6 +429,7 @@ describe('App', () => {
     getWorkflowHistoryEntryMock.mockResolvedValue(createHistoryDetail());
     deleteWorkflowHistoryEntryMock.mockResolvedValue({ status: 'ok' });
     clearWorkflowHistoryMock.mockResolvedValue({ status: 'ok', deleted: 0 });
+    previewWorkflowsFromComfyUIMock.mockResolvedValue({ status: 'success', preview: bulkImportPreviewFixture });
     importWorkflowsFromComfyUIMock.mockResolvedValue({ status: 'success', report: bulkImportReportFixture });
     importLocalWorkflowsMock.mockResolvedValue({ status: 'success', report: bulkImportReportFixture });
     previewTransferExportMock.mockResolvedValue(exportPreviewFixture);
@@ -801,7 +841,7 @@ describe('App', () => {
     deferredImport.resolve(bulkImportReportFixture);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Continue' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Scan Workflows' })).not.toBeDisabled();
       expect(screen.getByRole('button', { name: 'Choose Folder' })).not.toBeDisabled();
     });
   });

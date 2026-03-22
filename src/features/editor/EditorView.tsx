@@ -29,11 +29,12 @@ export function EditorView(props: EditorViewProps) {
         hasWorkflow={props.hasWorkflow}
         currentServerLabel={props.currentServerLabel}
         bulkImportBusy={props.bulkImportBusy}
+        bulkImportStage={props.bulkImportStage}
         onWorkflowIdChange={props.onWorkflowIdChange}
         onDescriptionChange={props.onDescriptionChange}
         onUploadFile={props.onUploadFile}
         onOpenFolderImport={props.onOpenFolderImport}
-        onImportAllFromComfyUI={props.onImportAllFromComfyUI}
+        onPreviewImportFromComfyUI={props.onPreviewImportFromComfyUI}
         t={props.t}
       />
 
