@@ -16,8 +16,8 @@ export function EditorPage({ controller }: EditorPageProps) {
   const isEditRoute = Boolean(params.serverId && params.workflowId);
   const routeServerId = params.serverId ? decodeURIComponent(params.serverId) : null;
   const routeWorkflowId = params.workflowId ? decodeURIComponent(params.workflowId) : null;
-  const hasBasicInfo = Boolean(controller.editorState.workflowId.trim() && controller.editorState.description.trim());
-  const editorStep = !controller.editorState.workflowData ? 1 : (!hasBasicInfo ? 2 : 3);
+  const hasWorkflowId = Boolean(controller.editorState.workflowId.trim());
+  const editorStep = !controller.editorState.workflowData ? 1 : (!hasWorkflowId ? 2 : 3);
 
   useEffect(() => {
     if (!isEditRoute || !routeServerId || !routeWorkflowId) {
