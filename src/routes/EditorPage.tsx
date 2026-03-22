@@ -97,6 +97,7 @@ export function EditorPage({ controller }: EditorPageProps) {
           hasWorkflow={Boolean(controller.editorState.workflowData)}
           currentServerLabel={controller.currentServer?.name?.trim() || controller.currentServer?.id || null}
           bulkImportBusy={controller.bulkImportState.loading}
+          bulkImportStage={controller.bulkImportState.loadingStage}
           emptyStateMessageKey={controller.editorEmptyStateMessageKey}
           mode={controller.editorState.editingWorkflowId ? "edit" : "create"}
           editingWorkflowId={controller.editorState.editingWorkflowId}
@@ -112,7 +113,7 @@ export function EditorPage({ controller }: EditorPageProps) {
           onDescriptionChange={(value) => controller.setEditorState((current) => ({ ...current, description: value, hasUnsavedChanges: true }))}
           onUploadFile={controller.handleEditorUpload}
           onOpenFolderImport={controller.handleOpenLocalImportFolder}
-          onImportAllFromComfyUI={() => void controller.handleImportAllFromComfyUI()}
+          onPreviewImportFromComfyUI={() => void controller.handlePreviewImportFromComfyUI()}
           onSave={controller.handleSaveWorkflow}
           onFilterChange={(next) => controller.setEditorFilters((current) => ({ ...current, ...next }))}
           onResetFilters={() => controller.setEditorFilters({

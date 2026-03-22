@@ -25,6 +25,7 @@ export interface EditorViewProps {
   hasWorkflow: boolean;
   currentServerLabel: string | null;
   bulkImportBusy: boolean;
+  bulkImportStage: "preview" | "import" | null;
   emptyStateMessageKey: string;
   mode: "create" | "edit";
   editingWorkflowId?: string | null;
@@ -40,7 +41,7 @@ export interface EditorViewProps {
   onDescriptionChange: (value: string) => void;
   onUploadFile: (file: File | null) => void;
   onOpenFolderImport: () => void;
-  onImportAllFromComfyUI: () => void;
+  onPreviewImportFromComfyUI: () => void;
   onSave: () => void;
   onFilterChange: (next: Partial<EditorFiltersState>) => void;
   onResetFilters: () => void;

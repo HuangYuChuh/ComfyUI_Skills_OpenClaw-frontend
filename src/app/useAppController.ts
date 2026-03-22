@@ -697,6 +697,8 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     handleConfirmTransfer,
     closeTransferModal,
     closeBulkImportModal: bulkWorkflowImport.closeBulkImportModal,
+    closeComfyUiImportPreview: bulkWorkflowImport.closeComfyUiImportPreview,
+    handlePreviewImportFromComfyUI: bulkWorkflowImport.handlePreviewImportFromComfyUI,
     handleImportAllFromComfyUI: bulkWorkflowImport.handleImportAllFromComfyUI,
     handleOpenLocalImportFiles: bulkWorkflowImport.handleOpenLocalImportFiles,
     handleOpenLocalImportFolder: bulkWorkflowImport.handleOpenLocalImportFolder,

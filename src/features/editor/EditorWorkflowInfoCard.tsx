@@ -1,5 +1,4 @@
 import { useState, type ChangeEvent } from "react";
-import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { FieldShell } from "../../components/ui/FieldShell";
 import { TextField } from "../../components/ui/TextField";
 
@@ -9,17 +8,17 @@ interface EditorWorkflowInfoCardProps {
   hasWorkflow: boolean;
   currentServerLabel: string | null;
   bulkImportBusy: boolean;
+  bulkImportStage: "preview" | "import" | null;
   onWorkflowIdChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onUploadFile: (file: File | null) => void;
   onOpenFolderImport: () => void;
-  onImportAllFromComfyUI: () => void;
-  t: (key: string) => string;
+  onPreviewImportFromComfyUI: () => void;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
 export function EditorWorkflowInfoCard(props: EditorWorkflowInfoCardProps) {
   const [uploadDragActive, setUploadDragActive] = useState(false);
-  const [comfyUiConfirmOpen, setComfyUiConfirmOpen] = useState(false);
 
   function onFileInputChange(event: ChangeEvent<HTMLInputElement>) {
     props.onUploadFile(event.target.files?.[0] || null);
@@ -31,15 +30,6 @@ export function EditorWorkflowInfoCard(props: EditorWorkflowInfoCardProps) {
     if (input instanceof HTMLInputElement) {
       input.click();
     }
-  }
-
-  function requestComfyUiImport() {
-    setComfyUiConfirmOpen(true);
-  }
-
-  function confirmComfyUiImport() {
-    setComfyUiConfirmOpen(false);
-    props.onImportAllFromComfyUI();
   }
 
   return (
@@ -118,10 +108,12 @@ export function EditorWorkflowInfoCard(props: EditorWorkflowInfoCardProps) {
                 <button
                   type="button"
                   className="editor-upload-card-button"
-                  onClick={requestComfyUiImport}
+                  onClick={props.onPreviewImportFromComfyUI}
                   disabled={props.bulkImportBusy}
                 >
-                  {props.bulkImportBusy ? props.t("bulk_import_loading") : props.t("editor_import_action_comfyui")}
+                  {props.bulkImportBusy
+                    ? props.t(props.bulkImportStage === "preview" ? "editor_import_action_comfyui_scanning" : "bulk_import_loading")
+                    : props.t("editor_import_action_comfyui")}
                 </button>
               </article>
             </div>
@@ -136,18 +128,6 @@ export function EditorWorkflowInfoCard(props: EditorWorkflowInfoCardProps) {
           </aside>
         </section>
       ) : null}
-
-      <ConfirmDialog
-        open={comfyUiConfirmOpen}
-        title={props.t("editor_import_comfyui_confirm_title")}
-        message={props.currentServerLabel
-          ? props.t("editor_import_comfyui_confirm_message_with_server", { server: props.currentServerLabel })
-          : props.t("editor_import_comfyui_confirm_message")}
-        confirmLabel={props.t("editor_import_comfyui_confirm_action")}
-        cancelLabel={props.t("cancel")}
-        onCancel={() => setComfyUiConfirmOpen(false)}
-        onConfirm={confirmComfyUiImport}
-      />
 
       {props.hasWorkflow ? (
         <section className="card" aria-labelledby="editor-info-title">

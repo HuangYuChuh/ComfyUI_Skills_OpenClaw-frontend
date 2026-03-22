@@ -3,6 +3,7 @@ import { ConfirmDialog } from "./components/ui/ConfirmDialog";
 import { ToastViewport } from "./components/ui/ToastViewport";
 import { UpdateBanner } from "./components/ui/UpdateBanner";
 import { TransferModal } from "./features/transfer/TransferModal";
+import { ComfyUiImportPreviewModal } from "./features/workflows/ComfyUiImportPreviewModal";
 import { BulkImportReportModal } from "./features/workflows/BulkImportReportModal";
 import { RunWorkflowModal } from "./features/workflows/RunWorkflowModal";
 import { WorkflowHistoryModal } from "./features/workflows/WorkflowHistoryModal";
@@ -69,6 +70,16 @@ function AppContent() {
         report={controller.bulkImportState.report}
         source={controller.bulkImportState.source}
         onClose={controller.closeBulkImportModal}
+        t={controller.t}
+      />
+
+      <ComfyUiImportPreviewModal
+        open={controller.bulkImportState.previewOpen}
+        preview={controller.bulkImportState.preview}
+        currentServerLabel={controller.currentServer?.name?.trim() || controller.currentServer?.id || null}
+        loading={controller.bulkImportState.loading && controller.bulkImportState.loadingStage === "import"}
+        onClose={controller.closeComfyUiImportPreview}
+        onConfirm={() => void controller.handleImportAllFromComfyUI()}
         t={controller.t}
       />
 
