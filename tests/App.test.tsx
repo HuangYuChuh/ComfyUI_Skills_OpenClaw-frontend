@@ -529,6 +529,7 @@ describe('App', () => {
     render(<App />);
 
     await screen.findByText('wf-a');
+    await user.click(screen.getByRole('button', { name: 'Batch actions' }));
     await user.click(screen.getByRole('checkbox', { name: 'Select workflow wf-a' }));
     await user.click(screen.getByRole('button', { name: 'Delete selected' }));
 

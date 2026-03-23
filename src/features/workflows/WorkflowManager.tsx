@@ -32,6 +32,7 @@ function getWorkflowSelectionKey(workflow: WorkflowSummaryDto) {
 export function WorkflowManager(props: WorkflowManagerProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [emptyUploadDragActive, setEmptyUploadDragActive] = useState(false);
+  const [batchMode, setBatchMode] = useState(false);
   const [selectedWorkflowKeys, setSelectedWorkflowKeys] = useState<string[]>([]);
   const dragEnabled = props.sort === "custom" && !props.search.trim();
 
@@ -67,6 +68,13 @@ export function WorkflowManager(props: WorkflowManagerProps) {
     setSelectedWorkflowKeys((current) => current.filter((key) => availableKeys.has(key)));
   }, [props.workflows]);
 
+  useEffect(() => {
+    if (props.workflows.length === 0 && batchMode) {
+      setBatchMode(false);
+      setSelectedWorkflowKeys([]);
+    }
+  }, [batchMode, props.workflows.length]);
+
   const summary = props.allWorkflowsForCurrentServer === props.workflows.length
     ? props.t(props.workflows.length === 1 ? "workflow_count_one" : "workflow_count", { count: props.workflows.length })
     : props.t(props.allWorkflowsForCurrentServer === 1 ? "workflow_count_filtered_one" : "workflow_count_filtered", {
@@ -97,6 +105,16 @@ export function WorkflowManager(props: WorkflowManagerProps) {
     });
   }
 
+  function openBatchMode() {
+    setOpenMenuId(null);
+    setBatchMode(true);
+  }
+
+  function closeBatchMode() {
+    setBatchMode(false);
+    setSelectedWorkflowKeys([]);
+  }
+
   return (
     <SectionPanel
       title={props.t("workflow_manager")}
@@ -118,6 +136,16 @@ export function WorkflowManager(props: WorkflowManagerProps) {
         />
         <div className="workflow-toolbar-side">
           {props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta workflow-summary-chip">{summary}</p> : null}
+          {props.workflows.length > 0 ? (
+            <button
+              type="button"
+              className={`btn ${batchMode ? "btn-primary" : "btn-secondary"} workflow-batch-toggle-btn`}
+              aria-pressed={batchMode}
+              onClick={() => (batchMode ? closeBatchMode() : openBatchMode())}
+            >
+              {batchMode ? props.t("workflow_exit_batch_mode") : props.t("workflow_enter_batch_mode")}
+            </button>
+          ) : null}
           <CustomSelect
             value={props.sort}
             options={sortOptions}
@@ -128,7 +156,7 @@ export function WorkflowManager(props: WorkflowManagerProps) {
         </div>
       </div>
 
-      {props.workflows.length > 0 ? (
+      {props.workflows.length > 0 && batchMode ? (
         <div className="workflow-batch-toolbar" role="group" aria-label={props.t("workflow_batch_actions")}>
           <p className="workflow-batch-summary">
             {props.t("workflow_selected_count", { count: selectedWorkflows.length })}
@@ -159,6 +187,13 @@ export function WorkflowManager(props: WorkflowManagerProps) {
               disabled={selectedWorkflows.length === 0}
             >
               {props.t("workflow_delete_selected")}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary workflow-batch-btn"
+              onClick={closeBatchMode}
+            >
+              {props.t("workflow_exit_batch_mode")}
             </button>
           </div>
         </div>
@@ -246,16 +281,18 @@ export function WorkflowManager(props: WorkflowManagerProps) {
             </div>
 
             <div className="workflow-actions">
-              <label className="workflow-select">
-                <input
-                  type="checkbox"
-                  className="workflow-select-toggle"
-                  checked={selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow))}
-                  aria-label={props.t("workflow_select_workflow", { id: workflow.id })}
-                  onChange={(event) => toggleWorkflowSelection(workflow, event.target.checked)}
-                />
-                <span className="sr-only">{props.t("workflow_select_workflow", { id: workflow.id })}</span>
-              </label>
+              {batchMode ? (
+                <label className="workflow-select">
+                  <input
+                    type="checkbox"
+                    className="workflow-select-toggle"
+                    checked={selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow))}
+                    aria-label={props.t("workflow_select_workflow", { id: workflow.id })}
+                    onChange={(event) => toggleWorkflowSelection(workflow, event.target.checked)}
+                  />
+                  <span className="sr-only">{props.t("workflow_select_workflow", { id: workflow.id })}</span>
+                </label>
+              ) : null}
 
               {props.sort === "custom" ? (
                 <button

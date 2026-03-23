@@ -18,6 +18,8 @@ const messages: Record<string, string> = {
   register_new_short: "+ New Workflow",
   workflow_batch_actions: "Batch workflow actions",
   workflow_selected_count: "{count} selected",
+  workflow_enter_batch_mode: "Batch actions",
+  workflow_exit_batch_mode: "Done",
   workflow_select_all: "Select all in view",
   workflow_clear_selection: "Clear selection",
   workflow_delete_selected: "Delete selected",
@@ -195,10 +197,27 @@ describe("WorkflowManager", () => {
     const user = userEvent.setup();
     const { props } = renderWorkflowManager();
 
+    expect(screen.queryByRole("checkbox", { name: "Select workflow wf-a" })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Batch actions" }));
     await user.click(screen.getByRole("checkbox", { name: "Select workflow wf-a" }));
     await user.click(screen.getByRole("button", { name: "Delete selected" }));
 
     expect(props.onBatchDeleteWorkflows).toHaveBeenCalledWith([workflows[0]]);
+  });
+
+  it("exits batch mode and clears the current selection", async () => {
+    const user = userEvent.setup();
+    renderWorkflowManager();
+
+    await user.click(screen.getByRole("button", { name: "Batch actions" }));
+    await user.click(screen.getByRole("checkbox", { name: "Select workflow wf-a" }));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: "Done" })[0]);
+
+    expect(screen.queryByRole("checkbox", { name: "Select workflow wf-a" })).toBeNull();
+    expect(screen.queryByText("1 selected")).toBeNull();
   });
 
   it("does not render the history shortcut even when a workflow has history", () => {

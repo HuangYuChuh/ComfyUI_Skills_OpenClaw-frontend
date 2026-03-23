@@ -17,6 +17,8 @@ export const enMessages = {
   workflow_history_short: "History",
   workflow_batch_actions: "Batch workflow actions",
   workflow_selected_count: "{count} selected",
+  workflow_enter_batch_mode: "Batch actions",
+  workflow_exit_batch_mode: "Done",
   workflow_select_all: "Select all in view",
   workflow_clear_selection: "Clear selection",
   workflow_delete_selected: "Delete selected",

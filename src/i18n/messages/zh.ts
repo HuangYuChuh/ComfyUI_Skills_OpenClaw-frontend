@@ -17,6 +17,8 @@ export const zhMessages = {
   workflow_history_short: "历史",
   workflow_batch_actions: "工作流批量操作",
   workflow_selected_count: "已选择 {count} 个工作流",
+  workflow_enter_batch_mode: "批量操作",
+  workflow_exit_batch_mode: "完成批量",
   workflow_select_all: "全选当前列表",
   workflow_clear_selection: "清空选择",
   workflow_delete_selected: "删除已选",

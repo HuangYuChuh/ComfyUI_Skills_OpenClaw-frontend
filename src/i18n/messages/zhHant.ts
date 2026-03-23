@@ -14,6 +14,8 @@ export const zhHantMessages = {
   workflow_sort_enabled: "已啟用優先",
   workflow_batch_actions: "工作流批次操作",
   workflow_selected_count: "已選擇 {count} 個工作流",
+  workflow_enter_batch_mode: "批次操作",
+  workflow_exit_batch_mode: "完成批次",
   workflow_select_all: "全選目前列表",
   workflow_clear_selection: "清空選擇",
   workflow_delete_selected: "刪除已選",
