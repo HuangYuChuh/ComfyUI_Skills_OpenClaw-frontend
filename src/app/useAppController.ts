@@ -729,6 +729,7 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     exposeVisible: editorActions.exposeVisible,
     handleEditWorkflow: workflowActions.handleEditWorkflow,
     handleDeleteWorkflow: workflowActions.handleDeleteWorkflow,
+    handleBatchDeleteWorkflows: workflowActions.handleBatchDeleteWorkflows,
     handleToggleWorkflow: workflowActions.handleToggleWorkflow,
     handleUploadWorkflowVersion: workflowActions.handleUploadWorkflowVersion,
     handleVersionFileChange: editorActions.handleVersionFileChange,

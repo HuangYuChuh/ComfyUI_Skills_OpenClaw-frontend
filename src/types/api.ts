@@ -152,8 +152,16 @@ export interface SaveServerPayload {
   output_dir: string;
 }
 
-export interface WorkflowOrderPayload {
+export interface WorkflowIdsPayload {
   workflow_ids: string[];
+}
+
+export interface WorkflowOrderPayload extends WorkflowIdsPayload {}
+
+export interface WorkflowBatchDeleteResponseDto {
+  status: string;
+  deleted: string[];
+  missing: string[];
 }
 
 export interface LocalWorkflowImportFilePayload {

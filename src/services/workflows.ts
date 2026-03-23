@@ -7,7 +7,9 @@ import type {
   RunWorkflowResponseDto,
   SaveWorkflowPayload,
   TogglePayload,
+  WorkflowBatchDeleteResponseDto,
   WorkflowDetailDto,
+  WorkflowIdsPayload,
   WorkflowOrderPayload,
   WorkflowSummaryDto,
 } from "../types/api";
@@ -38,6 +40,13 @@ export function toggleWorkflow(serverId: string, workflowId: string, payload: To
 export function deleteWorkflow(serverId: string, workflowId: string) {
   return requestJson<{ status: string }>(`/api/servers/${encodeURIComponent(serverId)}/workflow/${encodeURIComponent(workflowId)}`, {
     method: "DELETE",
+  });
+}
+
+export function batchDeleteWorkflows(serverId: string, payload: WorkflowIdsPayload) {
+  return requestJson<WorkflowBatchDeleteResponseDto>(`/api/servers/${encodeURIComponent(serverId)}/workflows/batch-delete`, {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 

@@ -1,4 +1,4 @@
-import { deleteWorkflow, getWorkflowDetail, reorderWorkflows, toggleWorkflow } from "../services/workflows";
+import { batchDeleteWorkflows, deleteWorkflow, getWorkflowDetail, reorderWorkflows, toggleWorkflow } from "../services/workflows";
 import { reorderWorkflowCollection, restoreWorkflowOrder } from "../lib/workflowOrder";
 import type { WorkflowDetailDto, WorkflowSummaryDto } from "../types/api";
 import type { Dispatch, MutableRefObject, RefObject, SetStateAction } from "react";
@@ -56,6 +56,43 @@ export function createWorkflowActions(args: CreateWorkflowActionsArgs) {
     }
   }
 
+  async function handleBatchDeleteWorkflows(workflows: WorkflowSummaryDto[]) {
+    if (workflows.length === 0) {
+      return;
+    }
+
+    const serverIds = new Set(workflows.map((workflow) => workflow.server_id));
+    if (serverIds.size !== 1) {
+      args.pushToast("error", args.t("err_del_wf_batch"));
+      return;
+    }
+
+    if (!(await args.confirm({
+      title: args.t("confirm_action_title"),
+      message: args.t("workflow_batch_delete_confirm", { count: workflows.length }),
+      confirmLabel: args.t("workflow_delete_selected"),
+      cancelLabel: args.t("cancel"),
+      tone: "danger",
+    }))) {
+      return;
+    }
+
+    try {
+      const result = await batchDeleteWorkflows(workflows[0].server_id, {
+        workflow_ids: workflows.map((workflow) => workflow.id),
+      });
+      await args.refreshWorkflows();
+      args.pushToast(
+        "success",
+        result.missing.length > 0
+          ? args.t("ok_del_wf_batch_partial", { deleted: result.deleted.length, missing: result.missing.length })
+          : args.t("ok_del_wf_batch", { count: result.deleted.length }),
+      );
+    } catch (error) {
+      args.pushToast("error", error instanceof Error ? error.message : args.t("err_del_wf_batch"));
+    }
+  }
+
   async function handleEditWorkflow(workflow: WorkflowSummaryDto) {
     try {
       await args.openEditor(await getWorkflowDetail(workflow.server_id, workflow.id));
@@ -104,6 +141,7 @@ export function createWorkflowActions(args: CreateWorkflowActionsArgs) {
   return {
     handleToggleWorkflow,
     handleDeleteWorkflow,
+    handleBatchDeleteWorkflows,
     handleEditWorkflow,
     handleUploadWorkflowVersion,
     handleReorderWorkflows,

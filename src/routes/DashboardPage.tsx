@@ -86,7 +86,7 @@ export function DashboardPage({ controller }: DashboardPageProps) {
         onCreateWorkflowFromFile={handleCreateWorkflowFromFile}
         onEditWorkflow={handleEditWorkflow}
         onRunWorkflow={controller.handleOpenRunWorkflow}
-        onOpenWorkflowHistory={controller.handleOpenWorkflowHistory}
+        onBatchDeleteWorkflows={controller.handleBatchDeleteWorkflows}
         onDeleteWorkflow={controller.handleDeleteWorkflow}
         onToggleWorkflow={controller.handleToggleWorkflow}
         onUploadWorkflowVersion={controller.handleUploadWorkflowVersion}

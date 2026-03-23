@@ -13,6 +13,7 @@ const {
   saveWorkflowMock,
   toggleWorkflowMock,
   deleteWorkflowMock,
+  batchDeleteWorkflowsMock,
   reorderWorkflowsMock,
   runWorkflowMock,
   listWorkflowHistoryMock,
@@ -37,6 +38,7 @@ const {
   saveWorkflowMock: vi.fn(),
   toggleWorkflowMock: vi.fn(),
   deleteWorkflowMock: vi.fn(),
+  batchDeleteWorkflowsMock: vi.fn(),
   reorderWorkflowsMock: vi.fn(),
   runWorkflowMock: vi.fn(),
   listWorkflowHistoryMock: vi.fn(),
@@ -68,6 +70,7 @@ vi.mock('../src/services/workflows', () => ({
   saveWorkflow: saveWorkflowMock,
   toggleWorkflow: toggleWorkflowMock,
   deleteWorkflow: deleteWorkflowMock,
+  batchDeleteWorkflows: batchDeleteWorkflowsMock,
   reorderWorkflows: reorderWorkflowsMock,
   runWorkflow: runWorkflowMock,
   listWorkflowHistory: listWorkflowHistoryMock,
@@ -150,31 +153,6 @@ function createDeferred<T>() {
     reject = rejectPromise;
   });
   return { promise, resolve, reject };
-}
-
-function createHistorySummary(overrides: Partial<{
-  run_id: string;
-  server_id: string;
-  workflow_id: string;
-  status: string;
-  created_at: string;
-  raw_args: Record<string, unknown>;
-  resolved_args: Record<string, unknown>;
-  image_count: number;
-  images: string[];
-}> = {}) {
-  return {
-    run_id: 'run-1',
-    server_id: workflowFixture.server_id,
-    workflow_id: workflowFixture.id,
-    status: 'success',
-    created_at: '2026-03-20T00:00:00Z',
-    raw_args: {},
-    resolved_args: {},
-    image_count: 0,
-    images: [],
-    ...overrides,
-  };
 }
 
 function createHistoryDetail(overrides: Partial<{
@@ -423,6 +401,7 @@ describe('App', () => {
     saveWorkflowMock.mockResolvedValue({ status: 'ok', workflow_id: 'wf-basic' });
     toggleWorkflowMock.mockResolvedValue({ status: 'ok', enabled: true });
     deleteWorkflowMock.mockResolvedValue({ status: 'ok' });
+    batchDeleteWorkflowsMock.mockResolvedValue({ status: 'success', deleted: ['wf-a'], missing: [] });
     reorderWorkflowsMock.mockResolvedValue({ status: 'ok', workflow_order: [] });
     runWorkflowMock.mockResolvedValue({ status: 'ok', result: { images: [] } });
     listWorkflowHistoryMock.mockResolvedValue({ history: [] });
@@ -524,6 +503,42 @@ describe('App', () => {
     await user.click(uploadItem);
 
     expect(getWorkflowDetailMock).toHaveBeenCalledWith('local', 'wf-a');
+  });
+
+  it('does not render the history shortcut in the workflow list', async () => {
+    listWorkflowsMock.mockResolvedValue({ workflows: [workflowFixtureWithHistory] });
+    render(<App />);
+
+    await screen.findByText('wf-a');
+
+    expect(screen.queryByRole('button', { name: 'History' })).not.toBeInTheDocument();
+  });
+
+  it('batch deletes the selected workflows from the current server', async () => {
+    const user = userEvent.setup();
+    const workflowB = {
+      ...workflowFixture,
+      id: 'wf-b',
+      description: 'Second workflow',
+      updated_at: 20,
+    };
+    listWorkflowsMock
+      .mockResolvedValueOnce({ workflows: [workflowFixture, workflowB] })
+      .mockResolvedValueOnce({ workflows: [workflowB] });
+
+    render(<App />);
+
+    await screen.findByText('wf-a');
+    await user.click(screen.getByRole('checkbox', { name: 'Select workflow wf-a' }));
+    await user.click(screen.getByRole('button', { name: 'Delete selected' }));
+
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Delete selected' }));
+
+    await waitFor(() => {
+      expect(batchDeleteWorkflowsMock).toHaveBeenCalledWith('local', { workflow_ids: ['wf-a'] });
+    });
+    expect(await screen.findByText('Deleted 1 workflows.')).toBeInTheDocument();
   });
 
   it('submits a new server using the plain ComfyUI payload shape', async () => {
@@ -914,153 +929,4 @@ describe('App', () => {
     });
   });
 
-  it('shows the History action immediately after a workflow runs successfully', async () => {
-    const user = userEvent.setup();
-    getWorkflowDetailMock.mockResolvedValue({
-      workflow_id: workflowFixture.id,
-      server_id: workflowFixture.server_id,
-      description: workflowFixture.description,
-      enabled: workflowFixture.enabled,
-      workflow_data: JSON.parse(workflowApiJson),
-      schema_params: {},
-      run_schema_params: {
-        prompt: {
-          type: 'string',
-          default: 'hello world',
-        },
-      },
-    });
-    runWorkflowMock.mockResolvedValue({
-      status: 'ok',
-      result: {
-        status: 'success',
-        run_id: 'run-1',
-        images: [],
-      },
-    });
-
-    render(<App />);
-
-    expect(screen.queryByRole('button', { name: 'History' })).not.toBeInTheDocument();
-
-    await user.click(await screen.findByRole('button', { name: 'Run' }));
-    await screen.findByText('Run workflow wf-a');
-    await user.click(screen.getByRole('button', { name: 'Run Workflow' }));
-    await screen.findByText('run_id: run-1');
-    await user.click(screen.getByRole('button', { name: 'Close' }));
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'History' })).toBeInTheDocument();
-    });
-  });
-
-  it('ignores stale history list responses after closing one workflow and opening another', async () => {
-    const user = userEvent.setup();
-    const workflowB = {
-      ...workflowFixtureWithHistory,
-      id: 'wf-b',
-      description: 'Second workflow',
-      updated_at: 20,
-    };
-    const firstHistoryList = createDeferred<{ history: ReturnType<typeof createHistorySummary>[] }>();
-    const secondHistoryList = createDeferred<{ history: ReturnType<typeof createHistorySummary>[] }>();
-    const secondHistoryDetail = createDeferred<unknown>();
-
-    listWorkflowsMock.mockResolvedValue({ workflows: [workflowFixtureWithHistory, workflowB] });
-    listWorkflowHistoryMock.mockImplementation((_serverId: string, workflowId: string) => {
-      if (workflowId === workflowFixture.id) {
-        return firstHistoryList.promise;
-      }
-      return secondHistoryList.promise;
-    });
-    getWorkflowHistoryEntryMock.mockImplementation((_serverId: string, workflowId: string, runId: string) => {
-      if (workflowId === workflowB.id && runId === 'run-b-1') {
-        return secondHistoryDetail.promise;
-      }
-      return Promise.resolve(createHistoryDetail({
-        run_id: 'unexpected',
-        workflow_id: workflowId,
-      }));
-    });
-
-    render(<App />);
-
-    const historyButtons = await screen.findAllByRole('button', { name: 'History' });
-    await user.click(historyButtons[0]);
-    await screen.findByText('Execution history for wf-a');
-    await user.click(screen.getByRole('button', { name: 'Close' }));
-
-    await user.click((await screen.findAllByRole('button', { name: 'History' }))[1]);
-    await screen.findByText('Execution history for wf-b');
-
-    secondHistoryList.resolve({
-      history: [createHistorySummary({
-        run_id: 'run-b-1',
-        workflow_id: workflowB.id,
-        created_at: '2026-03-20T00:05:00Z',
-      })],
-    });
-    secondHistoryDetail.resolve(createHistoryDetail({
-      run_id: 'run-b-1',
-      workflow_id: workflowB.id,
-      created_at: '2026-03-20T00:05:00Z',
-      resolved_args: { arg_b: 2 },
-    }));
-
-    await screen.findByText('arg_b');
-
-    firstHistoryList.resolve({
-      history: [createHistorySummary({ run_id: 'run-a-1' })],
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('Execution history for wf-b')).toBeInTheDocument();
-      expect(screen.getByText('arg_b')).toBeInTheDocument();
-      expect(screen.queryByText('arg_a')).not.toBeInTheDocument();
-    });
-    expect(getWorkflowHistoryEntryMock).not.toHaveBeenCalledWith('local', workflowFixture.id, 'run-a-1');
-  });
-
-  it('keeps the latest history detail when an earlier detail request resolves late', async () => {
-    const user = userEvent.setup();
-    const firstHistoryDetail = createDeferred<unknown>();
-    const secondHistoryDetail = createDeferred<unknown>();
-    listWorkflowsMock.mockResolvedValue({ workflows: [workflowFixtureWithHistory] });
-    listWorkflowHistoryMock.mockResolvedValue({
-      history: [
-        createHistorySummary({ run_id: 'run-1' }),
-        createHistorySummary({ run_id: 'run-2', created_at: '2026-03-20T00:05:00Z' }),
-      ],
-    });
-    getWorkflowHistoryEntryMock.mockImplementation((_serverId: string, _workflowId: string, runId: string) => {
-      if (runId === 'run-1') {
-        return firstHistoryDetail.promise;
-      }
-      return secondHistoryDetail.promise;
-    });
-
-    render(<App />);
-
-    await user.click(await screen.findByRole('button', { name: 'History' }));
-    await screen.findByRole('dialog');
-    await user.click(await screen.findByRole('button', { name: /Run #2/ }));
-
-    secondHistoryDetail.resolve(createHistoryDetail({
-      run_id: 'run-2',
-      created_at: '2026-03-20T00:05:00Z',
-      resolved_args: { arg_two: 2 },
-    }));
-
-    await screen.findByText('arg_two');
-
-    firstHistoryDetail.resolve(createHistoryDetail({
-      run_id: 'run-1',
-      resolved_args: { arg_one: 1 },
-    }));
-
-    await waitFor(() => {
-      expect(screen.getByText('arg_two')).toBeInTheDocument();
-      expect(screen.queryByText('arg_one')).not.toBeInTheDocument();
-    });
-  });
 });
