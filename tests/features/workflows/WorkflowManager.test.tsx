@@ -18,15 +18,19 @@ const messages: Record<string, string> = {
   register_new_short: "+ New Workflow",
   workflow_batch_actions: "Batch workflow actions",
   workflow_selected_count: "{count} selected",
+  workflow_selection_mode: "Management mode",
+  workflow_enter_batch_mode: "Manage",
+  workflow_management_active: "Managing",
+  workflow_exit_batch_mode: "Done",
   workflow_select_all: "Select all in view",
   workflow_clear_selection: "Clear selection",
   workflow_delete_selected: "Delete selected",
+  delete: "Delete",
   workflow_select_workflow: "Select workflow {id}",
   drag_upload: "Drag or click to upload ComfyUI workflow_api.json",
   after_upload: "After upload, you can remap parameters by node.",
   workflow_more_actions: "More actions for workflow {id}",
   upload_new_version: "Upload New Version",
-  delete: "Delete",
   edit_workflow: "Edit workflow {id}",
   toggle_workflow: "Toggle workflow {id}",
   wf_enabled: "Enabled",
@@ -195,10 +199,43 @@ describe("WorkflowManager", () => {
     const user = userEvent.setup();
     const { props } = renderWorkflowManager();
 
+    expect(screen.queryByRole("checkbox", { name: "Select workflow wf-a" })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Manage" }));
     await user.click(screen.getByRole("checkbox", { name: "Select workflow wf-a" }));
     await user.click(screen.getByRole("button", { name: "Delete selected" }));
 
     expect(props.onBatchDeleteWorkflows).toHaveBeenCalledWith([workflows[0]]);
+  });
+
+  it("toggles workflow selection when the main content area is clicked in management mode", async () => {
+    const user = userEvent.setup();
+    renderWorkflowManager();
+
+    await user.click(screen.getByRole("button", { name: "Manage" }));
+
+    const workflowMainGroup = screen.getByText("wf-a").closest(".workflow-main-group");
+    expect(workflowMainGroup).not.toBeNull();
+
+    await user.click(workflowMainGroup as HTMLElement);
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+
+    await user.click(workflowMainGroup as HTMLElement);
+    expect(screen.queryByText("1 selected")).toBeNull();
+  });
+
+  it("exits batch mode and clears the current selection", async () => {
+    const user = userEvent.setup();
+    renderWorkflowManager();
+
+    await user.click(screen.getByRole("button", { name: "Manage" }));
+    await user.click(screen.getByRole("checkbox", { name: "Select workflow wf-a" }));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(screen.queryByRole("checkbox", { name: "Select workflow wf-a" })).toBeNull();
+    expect(screen.queryByText("1 selected")).toBeNull();
   });
 
   it("does not render the history shortcut even when a workflow has history", () => {
