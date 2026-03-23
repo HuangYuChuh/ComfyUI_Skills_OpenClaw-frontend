@@ -323,6 +323,11 @@
     margin-left: 0;
   }
 
+  .workflow-batch-toolbar,
+  .workflow-batch-actions {
+    width: 100%;
+  }
+
   .server-main-row,
   .server-main-left,
   .server-empty-state,
@@ -421,6 +426,10 @@
   }
 
   .workflow-inline-btn {
+    flex: 1 1 calc(50% - 6px);
+  }
+
+  .workflow-batch-btn {
     flex: 1 1 calc(50% - 6px);
   }
 }

@@ -17,7 +17,7 @@ interface WorkflowManagerProps {
   onCreateWorkflowFromFile: (file: File | null) => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
   onRunWorkflow: (workflow: WorkflowSummaryDto) => void;
-  onOpenWorkflowHistory: (workflow: WorkflowSummaryDto) => void;
+  onBatchDeleteWorkflows: (workflows: WorkflowSummaryDto[]) => void;
   onDeleteWorkflow: (workflow: WorkflowSummaryDto) => void;
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
@@ -25,9 +25,14 @@ interface WorkflowManagerProps {
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
+function getWorkflowSelectionKey(workflow: WorkflowSummaryDto) {
+  return `${workflow.server_id}:${workflow.id}`;
+}
+
 export function WorkflowManager(props: WorkflowManagerProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [emptyUploadDragActive, setEmptyUploadDragActive] = useState(false);
+  const [selectedWorkflowKeys, setSelectedWorkflowKeys] = useState<string[]>([]);
   const dragEnabled = props.sort === "custom" && !props.search.trim();
 
   function onEmptyUploadInputChange(event: ChangeEvent<HTMLInputElement>) {
@@ -57,6 +62,11 @@ export function WorkflowManager(props: WorkflowManagerProps) {
     };
   }, []);
 
+  useEffect(() => {
+    const availableKeys = new Set(props.workflows.map(getWorkflowSelectionKey));
+    setSelectedWorkflowKeys((current) => current.filter((key) => availableKeys.has(key)));
+  }, [props.workflows]);
+
   const summary = props.allWorkflowsForCurrentServer === props.workflows.length
     ? props.t(props.workflows.length === 1 ? "workflow_count_one" : "workflow_count", { count: props.workflows.length })
     : props.t(props.allWorkflowsForCurrentServer === 1 ? "workflow_count_filtered_one" : "workflow_count_filtered", {
@@ -71,6 +81,21 @@ export function WorkflowManager(props: WorkflowManagerProps) {
     { value: "name_desc", label: props.t("workflow_sort_name_desc") },
     { value: "enabled_first", label: props.t("workflow_sort_enabled") },
   ], [props.t]);
+
+  const selectedWorkflows = useMemo(
+    () => props.workflows.filter((workflow) => selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow))),
+    [props.workflows, selectedWorkflowKeys],
+  );
+
+  function toggleWorkflowSelection(workflow: WorkflowSummaryDto, checked: boolean) {
+    const workflowKey = getWorkflowSelectionKey(workflow);
+    setSelectedWorkflowKeys((current) => {
+      if (checked) {
+        return current.includes(workflowKey) ? current : [...current, workflowKey];
+      }
+      return current.filter((key) => key !== workflowKey);
+    });
+  }
 
   return (
     <SectionPanel
@@ -102,6 +127,42 @@ export function WorkflowManager(props: WorkflowManagerProps) {
           />
         </div>
       </div>
+
+      {props.workflows.length > 0 ? (
+        <div className="workflow-batch-toolbar" role="group" aria-label={props.t("workflow_batch_actions")}>
+          <p className="workflow-batch-summary">
+            {props.t("workflow_selected_count", { count: selectedWorkflows.length })}
+          </p>
+          <div className="workflow-batch-actions">
+            <button
+              type="button"
+              className="btn btn-secondary workflow-batch-btn"
+              onClick={() => setSelectedWorkflowKeys(props.workflows.map(getWorkflowSelectionKey))}
+            >
+              {props.t("workflow_select_all")}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary workflow-batch-btn"
+              onClick={() => setSelectedWorkflowKeys([])}
+              disabled={selectedWorkflows.length === 0}
+            >
+              {props.t("workflow_clear_selection")}
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary workflow-batch-btn"
+              onClick={() => {
+                setOpenMenuId(null);
+                props.onBatchDeleteWorkflows(selectedWorkflows);
+              }}
+              disabled={selectedWorkflows.length === 0}
+            >
+              {props.t("workflow_delete_selected")}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="workflow-list" aria-live="polite">
         {props.workflows.length === 0 ? (
@@ -185,6 +246,17 @@ export function WorkflowManager(props: WorkflowManagerProps) {
             </div>
 
             <div className="workflow-actions">
+              <label className="workflow-select">
+                <input
+                  type="checkbox"
+                  className="workflow-select-toggle"
+                  checked={selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow))}
+                  aria-label={props.t("workflow_select_workflow", { id: workflow.id })}
+                  onChange={(event) => toggleWorkflowSelection(workflow, event.target.checked)}
+                />
+                <span className="sr-only">{props.t("workflow_select_workflow", { id: workflow.id })}</span>
+              </label>
+
               {props.sort === "custom" ? (
                 <button
                   type="button"
@@ -242,19 +314,6 @@ export function WorkflowManager(props: WorkflowManagerProps) {
               </div>
 
               <div className="workflow-secondary-actions">
-                {workflow.has_history ? (
-                  <button
-                    type="button"
-                    className="btn btn-secondary workflow-inline-btn workflow-secondary-btn"
-                    onClick={() => {
-                      setOpenMenuId(null);
-                      props.onOpenWorkflowHistory(workflow);
-                    }}
-                  >
-                    {props.t("workflow_history_short")}
-                  </button>
-                ) : null}
-
                 <button
                   type="button"
                   className="btn btn-secondary btn-icon workflow-action-btn workflow-action-edit"

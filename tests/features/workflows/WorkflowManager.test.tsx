@@ -16,6 +16,12 @@ const messages: Record<string, string> = {
   workflow_sort_enabled: "Enabled first",
   workflow_search_placeholder: "Search workflows",
   register_new_short: "+ New Workflow",
+  workflow_batch_actions: "Batch workflow actions",
+  workflow_selected_count: "{count} selected",
+  workflow_select_all: "Select all in view",
+  workflow_clear_selection: "Clear selection",
+  workflow_delete_selected: "Delete selected",
+  workflow_select_workflow: "Select workflow {id}",
   drag_upload: "Drag or click to upload ComfyUI workflow_api.json",
   after_upload: "After upload, you can remap parameters by node.",
   workflow_more_actions: "More actions for workflow {id}",
@@ -62,6 +68,8 @@ function renderWorkflowManager(overrides: Partial<ComponentProps<typeof Workflow
     onCreateWorkflow: vi.fn(),
     onCreateWorkflowFromFile: vi.fn(),
     onEditWorkflow: vi.fn(),
+    onRunWorkflow: vi.fn(),
+    onBatchDeleteWorkflows: vi.fn(),
     onDeleteWorkflow: vi.fn(),
     onToggleWorkflow: vi.fn(),
     onUploadWorkflowVersion: vi.fn(),
@@ -181,5 +189,24 @@ describe("WorkflowManager", () => {
     });
 
     expect(props.onCreateWorkflowFromFile).toHaveBeenCalledWith(file);
+  });
+
+  it("selects workflows and triggers batch delete for the current view", async () => {
+    const user = userEvent.setup();
+    const { props } = renderWorkflowManager();
+
+    await user.click(screen.getByRole("checkbox", { name: "Select workflow wf-a" }));
+    await user.click(screen.getByRole("button", { name: "Delete selected" }));
+
+    expect(props.onBatchDeleteWorkflows).toHaveBeenCalledWith([workflows[0]]);
+  });
+
+  it("does not render the history shortcut even when a workflow has history", () => {
+    renderWorkflowManager({
+      workflows: [{ ...workflows[0], has_history: true }],
+      allWorkflowsForCurrentServer: 1,
+    });
+
+    expect(screen.queryByRole("button", { name: "History" })).toBeNull();
   });
 });

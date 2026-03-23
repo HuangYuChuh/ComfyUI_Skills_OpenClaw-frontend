@@ -27,7 +27,7 @@ interface MainShellProps {
   onCreateWorkflowFromFile: (file: File | null) => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
   onRunWorkflow: (workflow: WorkflowSummaryDto) => void;
-  onOpenWorkflowHistory: (workflow: WorkflowSummaryDto) => void;
+  onBatchDeleteWorkflows: (workflows: WorkflowSummaryDto[]) => void;
   onDeleteWorkflow: (workflow: WorkflowSummaryDto) => void;
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
@@ -66,7 +66,7 @@ export function MainShell(props: MainShellProps) {
         onCreateWorkflowFromFile={props.onCreateWorkflowFromFile}
         onEditWorkflow={props.onEditWorkflow}
         onRunWorkflow={props.onRunWorkflow}
-        onOpenWorkflowHistory={props.onOpenWorkflowHistory}
+        onBatchDeleteWorkflows={props.onBatchDeleteWorkflows}
         onDeleteWorkflow={props.onDeleteWorkflow}
         onToggleWorkflow={props.onToggleWorkflow}
         onUploadWorkflowVersion={props.onUploadWorkflowVersion}
