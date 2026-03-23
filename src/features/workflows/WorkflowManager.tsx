@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from "react";
 import { SectionPanel } from "../../components/layout/SectionPanel";
 import { CustomSelect } from "../../components/ui/CustomSelect";
 import { SwitchField } from "../../components/ui/SwitchField";
 import { TextField } from "../../components/ui/TextField";
 import type { WorkflowSummaryDto } from "../../types/api";
-import { EditIcon, MoreIcon, TrashIcon, UploadIcon } from "./components/WorkflowIcons";
+import { EditIcon, MoreIcon, RunIcon, TrashIcon, UploadIcon } from "./components/WorkflowIcons";
 
 interface WorkflowManagerProps {
   workflows: WorkflowSummaryDto[];
@@ -32,9 +32,9 @@ function getWorkflowSelectionKey(workflow: WorkflowSummaryDto) {
 export function WorkflowManager(props: WorkflowManagerProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [emptyUploadDragActive, setEmptyUploadDragActive] = useState(false);
-  const [batchMode, setBatchMode] = useState(false);
+  const [managementMode, setManagementMode] = useState(false);
   const [selectedWorkflowKeys, setSelectedWorkflowKeys] = useState<string[]>([]);
-  const dragEnabled = props.sort === "custom" && !props.search.trim();
+  const dragEnabled = props.sort === "custom" && !props.search.trim() && !managementMode;
 
   function onEmptyUploadInputChange(event: ChangeEvent<HTMLInputElement>) {
     props.onCreateWorkflowFromFile(event.target.files?.[0] || null);
@@ -69,11 +69,11 @@ export function WorkflowManager(props: WorkflowManagerProps) {
   }, [props.workflows]);
 
   useEffect(() => {
-    if (props.workflows.length === 0 && batchMode) {
-      setBatchMode(false);
+    if (props.workflows.length === 0 && managementMode) {
+      setManagementMode(false);
       setSelectedWorkflowKeys([]);
     }
-  }, [batchMode, props.workflows.length]);
+  }, [managementMode, props.workflows.length]);
 
   const summary = props.allWorkflowsForCurrentServer === props.workflows.length
     ? props.t(props.workflows.length === 1 ? "workflow_count_one" : "workflow_count", { count: props.workflows.length })
@@ -105,13 +105,38 @@ export function WorkflowManager(props: WorkflowManagerProps) {
     });
   }
 
-  function openBatchMode() {
-    setOpenMenuId(null);
-    setBatchMode(true);
+  function toggleWorkflowSelectionByClick(workflow: WorkflowSummaryDto) {
+    const workflowKey = getWorkflowSelectionKey(workflow);
+    setSelectedWorkflowKeys((current) => (
+      current.includes(workflowKey)
+        ? current.filter((key) => key !== workflowKey)
+        : [...current, workflowKey]
+    ));
   }
 
-  function closeBatchMode() {
-    setBatchMode(false);
+  function handleManagementRowClick(workflow: WorkflowSummaryDto, event: ReactMouseEvent<HTMLElement>) {
+    const target = event.target as HTMLElement | null;
+    if (!managementMode || target?.closest(".workflow-select")) {
+      return;
+    }
+    toggleWorkflowSelectionByClick(workflow);
+  }
+
+  function handleManagementRowKeyDown(workflow: WorkflowSummaryDto, event: ReactKeyboardEvent<HTMLElement>) {
+    if (!managementMode || (event.key !== "Enter" && event.key !== " ")) {
+      return;
+    }
+    event.preventDefault();
+    toggleWorkflowSelectionByClick(workflow);
+  }
+
+  function openManagementMode() {
+    setOpenMenuId(null);
+    setManagementMode(true);
+  }
+
+  function closeManagementMode() {
+    setManagementMode(false);
     setSelectedWorkflowKeys([]);
   }
 
@@ -136,16 +161,6 @@ export function WorkflowManager(props: WorkflowManagerProps) {
         />
         <div className="workflow-toolbar-side">
           {props.allWorkflowsForCurrentServer ? <p className="section-meta panel-meta workflow-summary-chip">{summary}</p> : null}
-          {props.workflows.length > 0 ? (
-            <button
-              type="button"
-              className={`btn ${batchMode ? "btn-primary" : "btn-secondary"} workflow-batch-toggle-btn`}
-              aria-pressed={batchMode}
-              onClick={() => (batchMode ? closeBatchMode() : openBatchMode())}
-            >
-              {batchMode ? props.t("workflow_exit_batch_mode") : props.t("workflow_enter_batch_mode")}
-            </button>
-          ) : null}
           <CustomSelect
             value={props.sort}
             options={sortOptions}
@@ -153,25 +168,37 @@ export function WorkflowManager(props: WorkflowManagerProps) {
             className="is-server-select"
             onChange={props.onSortChange}
           />
+          {props.workflows.length > 0 ? (
+            <button
+              type="button"
+              className={`btn btn-secondary workflow-batch-toggle-btn ${managementMode ? "is-active" : ""}`.trim()}
+              aria-pressed={managementMode}
+              onClick={() => (managementMode ? closeManagementMode() : openManagementMode())}
+            >
+              {managementMode ? props.t("workflow_management_active") : props.t("workflow_enter_batch_mode")}
+            </button>
+          ) : null}
         </div>
       </div>
 
-      {props.workflows.length > 0 && batchMode ? (
-        <div className="workflow-batch-toolbar" role="group" aria-label={props.t("workflow_batch_actions")}>
-          <p className="workflow-batch-summary">
-            {props.t("workflow_selected_count", { count: selectedWorkflows.length })}
-          </p>
-          <div className="workflow-batch-actions">
+      {managementMode ? (
+        <div className="workflow-management-bar" role="group" aria-label={props.t("workflow_batch_actions")}>
+          <div className="workflow-management-status">
+            <p className="section-meta panel-meta workflow-summary-chip workflow-batch-selection-chip">
+              {props.t("workflow_selected_count", { count: selectedWorkflows.length })}
+            </p>
+          </div>
+          <div className="workflow-management-actions">
             <button
               type="button"
-              className="btn btn-secondary workflow-batch-btn"
+              className="btn btn-secondary workflow-batch-inline-btn"
               onClick={() => setSelectedWorkflowKeys(props.workflows.map(getWorkflowSelectionKey))}
             >
               {props.t("workflow_select_all")}
             </button>
             <button
               type="button"
-              className="btn btn-secondary workflow-batch-btn"
+              className="btn btn-secondary workflow-batch-inline-btn"
               onClick={() => setSelectedWorkflowKeys([])}
               disabled={selectedWorkflows.length === 0}
             >
@@ -179,7 +206,7 @@ export function WorkflowManager(props: WorkflowManagerProps) {
             </button>
             <button
               type="button"
-              className="btn btn-primary workflow-batch-btn"
+              className="btn btn-danger-soft workflow-batch-inline-btn"
               onClick={() => {
                 setOpenMenuId(null);
                 props.onBatchDeleteWorkflows(selectedWorkflows);
@@ -190,8 +217,8 @@ export function WorkflowManager(props: WorkflowManagerProps) {
             </button>
             <button
               type="button"
-              className="btn btn-secondary workflow-batch-btn"
-              onClick={closeBatchMode}
+              className="btn btn-secondary workflow-batch-inline-btn"
+              onClick={closeManagementMode}
             >
               {props.t("workflow_exit_batch_mode")}
             </button>
@@ -243,7 +270,7 @@ export function WorkflowManager(props: WorkflowManagerProps) {
         ) : props.workflows.map((workflow) => (
           <article
             key={`${workflow.server_id}-${workflow.id}`}
-            className={`workflow-item ${dragEnabled ? "is-reorderable" : ""}`}
+            className={`workflow-item ${dragEnabled ? "is-reorderable" : ""} ${managementMode ? "is-management-mode" : ""} ${selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow)) ? "is-selected" : ""}`.trim()}
             data-workflow-id={workflow.id}
             data-server-id={workflow.server_id}
             onDragOver={(event) => {
@@ -271,18 +298,16 @@ export function WorkflowManager(props: WorkflowManagerProps) {
               props.onReorderWorkflows(sourceWorkflowId, workflow.id, event.clientY > rect.top + rect.height / 2);
             }}
           >
-            <div className="workflow-main">
-              <div className="workflow-name-row">
-                <span className={`status-dot ${workflow.enabled ? "" : "is-disabled"}`} aria-hidden="true">&#x25CF;</span>
-                <span className="workflow-name">{workflow.id}</span>
-                <span className="workflow-server-tag">{workflow.server_name || workflow.server_id}</span>
-              </div>
-              {workflow.description ? <p className="workflow-desc">{workflow.description}</p> : null}
-            </div>
-
-            <div className="workflow-actions">
-              {batchMode ? (
-                <label className="workflow-select">
+            <div
+              className="workflow-main-group"
+              role={managementMode ? "button" : undefined}
+              tabIndex={managementMode ? 0 : undefined}
+              aria-pressed={managementMode ? selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow)) : undefined}
+              onClick={(event) => handleManagementRowClick(workflow, event)}
+              onKeyDown={(event) => handleManagementRowKeyDown(workflow, event)}
+            >
+              {managementMode ? (
+                <label className="workflow-select workflow-select-leading" onClick={(event) => event.stopPropagation()}>
                   <input
                     type="checkbox"
                     className="workflow-select-toggle"
@@ -294,7 +319,18 @@ export function WorkflowManager(props: WorkflowManagerProps) {
                 </label>
               ) : null}
 
-              {props.sort === "custom" ? (
+              <div className="workflow-main">
+                <div className="workflow-name-row">
+                  <span className={`status-dot ${workflow.enabled ? "" : "is-disabled"}`} aria-hidden="true">&#x25CF;</span>
+                  <span className="workflow-name">{workflow.id}</span>
+                  <span className="workflow-server-tag">{workflow.server_name || workflow.server_id}</span>
+                </div>
+                {workflow.description ? <p className="workflow-desc">{workflow.description}</p> : null}
+              </div>
+            </div>
+
+            <div className="workflow-actions">
+              {props.sort === "custom" && !managementMode ? (
                 <button
                   type="button"
                   className={`btn btn-secondary btn-icon workflow-drag-handle ${dragEnabled ? "" : "is-disabled"}`}
@@ -340,13 +376,14 @@ export function WorkflowManager(props: WorkflowManagerProps) {
               <div className="workflow-primary-actions">
                 <button
                   type="button"
-                  className="btn btn-secondary workflow-inline-btn workflow-run-btn"
+                  className="btn btn-secondary btn-icon workflow-action-btn workflow-run-btn"
+                  aria-label={props.t("run_workflow_short")}
                   onClick={() => {
                     setOpenMenuId(null);
                     props.onRunWorkflow(workflow);
                   }}
                 >
-                  {props.t("run_workflow_short")}
+                  <RunIcon />
                 </button>
               </div>
 

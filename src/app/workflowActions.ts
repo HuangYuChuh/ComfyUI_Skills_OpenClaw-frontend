@@ -69,7 +69,12 @@ export function createWorkflowActions(args: CreateWorkflowActionsArgs) {
 
     if (!(await args.confirm({
       title: args.t("confirm_action_title"),
-      message: args.t("workflow_batch_delete_confirm", { count: workflows.length }),
+      message: [
+        args.t("workflow_batch_delete_confirm", { count: workflows.length }),
+        args.t("workflow_batch_delete_preview", {
+          items: `${workflows.slice(0, 3).map((workflow) => workflow.id).join(", ")}${workflows.length > 3 ? "..." : ""}`,
+        }),
+      ].join("\n"),
       confirmLabel: args.t("workflow_delete_selected"),
       cancelLabel: args.t("cancel"),
       tone: "danger",

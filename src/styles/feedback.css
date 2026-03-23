@@ -323,8 +323,9 @@
     margin-left: 0;
   }
 
-  .workflow-batch-toolbar,
-  .workflow-batch-actions {
+  .workflow-management-bar,
+  .workflow-management-actions,
+  .workflow-management-status {
     width: 100%;
   }
 
@@ -429,8 +430,13 @@
     flex: 1 1 calc(50% - 6px);
   }
 
-  .workflow-batch-btn {
+  .workflow-batch-toggle-btn,
+  .workflow-batch-inline-btn {
     flex: 1 1 calc(50% - 6px);
+  }
+
+  .workflow-main-group {
+    width: 100%;
   }
 }
 
