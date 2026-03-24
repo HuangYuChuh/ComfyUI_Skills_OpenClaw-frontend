@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CustomSelect } from "../../components/ui/CustomSelect";
 import { FieldShell } from "../../components/ui/FieldShell";
 import { Modal } from "../../components/ui/Modal";
@@ -11,6 +11,7 @@ import type { RunWorkflowParam } from "./types";
 interface RunWorkflowModalProps {
   open: boolean;
   workflowId: string;
+  serverId: string;
   schema: Record<string, RunWorkflowParam>;
   values: Record<string, unknown>;
   loading: boolean;
@@ -20,6 +21,69 @@ interface RunWorkflowModalProps {
   onClose: () => void;
   onChange: (key: string, value: unknown) => void;
   onSubmit: () => void;
+  onUploadImage: (serverId: string, file: File) => Promise<string>;
+}
+
+function ImageUploadField(props: {
+  id: string;
+  serverId: string;
+  value: string;
+  onUploadImage: (serverId: string, file: File) => Promise<string>;
+  onChange: (filename: string) => void;
+  t: (key: string) => string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const filename = await props.onUploadImage(props.serverId, file);
+      props.onChange(filename);
+    } catch {
+      setPreviewUrl(null);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="run-workflow-image-upload">
+      <div className="run-workflow-image-controls">
+        <button
+          type="button"
+          className="btn btn-secondary run-workflow-image-choose-btn"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? props.t("run_workflow_image_uploading") : props.t("run_workflow_image_choose")}
+        </button>
+        {props.value && <span className="run-workflow-image-filename">{props.value}</span>}
+      </div>
+      <input
+        ref={fileInputRef}
+        id={props.id}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="sr-only"
+      />
+      {previewUrl && (
+        <img src={previewUrl} alt="preview" className="run-workflow-image-preview" />
+      )}
+    </div>
+  );
 }
 
 function isPromptLike(key: string, param: RunWorkflowParam, value: unknown) {
@@ -76,7 +140,16 @@ export function RunWorkflowModal(props: RunWorkflowModalProps) {
                 required={param.required}
                 className="run-workflow-field"
               >
-                {choices.length > 0 ? (
+                {type === "image" ? (
+                  <ImageUploadField
+                    id={`run-param-${key}`}
+                    serverId={props.serverId}
+                    value={String(value ?? "")}
+                    onUploadImage={props.onUploadImage}
+                    onChange={(filename) => props.onChange(key, filename)}
+                    t={props.t}
+                  />
+                ) : choices.length > 0 ? (
                   <CustomSelect
                     id={`run-param-${key}`}
                     value={String(value ?? "")}
@@ -133,7 +206,14 @@ export function RunWorkflowModal(props: RunWorkflowModalProps) {
           </div>
           {props.result.run_id ? <p className="run-workflow-meta">run_id: {props.result.run_id}</p> : null}
           {props.result.prompt_id ? <p className="run-workflow-meta">prompt_id: {props.result.prompt_id}</p> : null}
-          {props.result.error ? <p className="run-workflow-error">{props.result.error}</p> : null}
+          {props.result.error ? (
+            <p className="run-workflow-error">
+              <strong>{props.t("run_workflow_comfyui_error_prefix")}</strong>{" "}
+              {typeof props.result.error === "string"
+                ? props.result.error
+                : (props.result.error as Record<string, unknown>)?.message as string ?? JSON.stringify(props.result.error)}
+            </p>
+          ) : null}
           {Array.isArray(props.result.images) && props.result.images.length > 0 ? (
             <ul className="run-workflow-paths">
               {props.result.images.map((image) => (

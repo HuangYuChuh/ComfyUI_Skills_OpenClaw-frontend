@@ -86,6 +86,7 @@ function AppContent() {
       <RunWorkflowModal
         open={controller.runModalState.open}
         workflowId={controller.runModalState.workflow?.id || ""}
+        serverId={controller.runModalState.workflow?.server_id || ""}
         schema={controller.runModalState.schema}
         values={controller.runModalState.values}
         loading={controller.runModalState.loading}
@@ -94,6 +95,7 @@ function AppContent() {
         onClose={controller.closeRunWorkflowModal}
         onChange={controller.updateRunWorkflowValue}
         onSubmit={controller.handleRunWorkflow}
+        onUploadImage={controller.handleUploadImage}
         t={controller.t}
       />
 

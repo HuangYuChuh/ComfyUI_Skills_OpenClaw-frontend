@@ -45,6 +45,7 @@ import {
   listWorkflowHistory,
   listWorkflows,
   runWorkflow,
+  uploadImageToComfyUI,
 } from "../services/workflows";
 import { buildTransferExport, importTransferBundle, previewTransferExport, previewTransferImport } from "../services/transfer";
 import {
@@ -455,6 +456,11 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     }));
   }
 
+  async function handleUploadImage(serverId: string, file: File): Promise<string> {
+    const result = await uploadImageToComfyUI(serverId, file);
+    return result.name;
+  }
+
   async function handleRunWorkflow() {
     const workflow = runModalState.workflow;
     if (!workflow) {
@@ -490,7 +496,10 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
         markWorkflowHasHistory(workflow);
         pushToast("success", t("run_workflow_success", { id: workflow.id }));
       } else {
-        pushToast("error", response.result.error || t("run_workflow_error"));
+        const errMsg = typeof response.result.error === "string"
+          ? response.result.error
+          : (response.result.error as Record<string, unknown>)?.message as string | undefined;
+        pushToast("error", errMsg || t("run_workflow_error"));
       }
     } catch (error) {
       setRunModalState((current) => ({ ...current, submitting: false }));
@@ -713,6 +722,7 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     closeRunWorkflowModal,
     updateRunWorkflowValue,
     handleRunWorkflow,
+    handleUploadImage,
     handleOpenWorkflowHistory,
     closeWorkflowHistoryModal,
     refreshWorkflowHistory,
