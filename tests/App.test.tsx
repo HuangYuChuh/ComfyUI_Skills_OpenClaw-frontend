@@ -883,13 +883,17 @@ describe('App', () => {
 
     render(<App />);
 
-    const initialRunButtons = await screen.findAllByRole('button', { name: 'Run' });
-    await user.click(initialRunButtons[0]);
+    // Run is now inside the "more" dropdown menu
+    const moreTriggers = await screen.findAllByRole('button', { name: /More actions for workflow/ });
+    await user.click(moreTriggers[0]);
+    const firstMenu = moreTriggers[0].closest('.workflow-more') as HTMLElement;
+    await user.click(within(firstMenu).getByRole('menuitem', { name: 'Run' }));
     await screen.findByRole('dialog');
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
-    const runButtons = await screen.findAllByRole('button', { name: 'Run' });
-    await user.click(runButtons[1]);
+    await user.click(moreTriggers[1]);
+    const secondMenu = moreTriggers[1].closest('.workflow-more') as HTMLElement;
+    await user.click(within(secondMenu).getByRole('menuitem', { name: 'Run' }));
 
     secondDetail.resolve({
       workflow_id: workflowB.id,
