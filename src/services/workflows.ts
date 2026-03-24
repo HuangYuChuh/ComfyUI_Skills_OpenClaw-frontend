@@ -102,6 +102,23 @@ export function previewWorkflowsFromComfyUI(serverId: string) {
   );
 }
 
+export async function uploadImageToComfyUI(
+  serverId: string,
+  file: File,
+): Promise<{ name: string; subfolder: string; type: string }> {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await fetch(
+    `/api/servers/${encodeURIComponent(serverId)}/upload/image`,
+    { method: "POST", body: formData },
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Upload failed");
+  }
+  return response.json();
+}
+
 export function importLocalWorkflows(serverId: string, files: LocalWorkflowImportFilePayload[]) {
   return requestJson<{ status: string; report: BulkImportReportDto }>(`/api/servers/${encodeURIComponent(serverId)}/workflows/import/local`, {
     method: "POST",

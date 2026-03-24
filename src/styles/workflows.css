@@ -576,6 +576,37 @@ button:disabled,
   justify-content: flex-start;
 }
 
+.run-workflow-image-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.run-workflow-image-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.run-workflow-image-choose-btn {
+  flex-shrink: 0;
+}
+
+.run-workflow-image-filename {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  word-break: break-all;
+  min-width: 0;
+}
+
+.run-workflow-image-preview {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+  object-fit: contain;
+}
+
 .run-workflow-result,
 .workflow-history-code-block,
 .workflow-history-item {
