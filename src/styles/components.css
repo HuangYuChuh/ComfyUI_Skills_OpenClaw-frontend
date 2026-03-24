@@ -132,7 +132,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px;
+  padding: 0 8px;
+  min-height: 44px;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.2);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
@@ -143,7 +144,7 @@
 .workflow-status-toggle {
   min-height: 44px;
   padding: 0 8px;
-  justify-content: center;
+  align-items: center;
   border-radius: 10px;
   border-color: rgba(148, 163, 184, 0.14);
   background: rgba(255, 255, 255, 0.08);
@@ -159,10 +160,6 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(255, 255, 255, 0.04);
 }
 
 .workflow-status-toggle:hover,
@@ -178,14 +175,15 @@
   min-width: 0;
 }
 
+.server-status-toggle .server-toggle-field,
 .workflow-status-toggle .workflow-toggle-field {
   display: inline-flex;
   flex: 0 0 auto;
   width: auto;
-  min-height: 42px;
+  height: 100%;
   align-items: center;
-  justify-content: center;
   gap: 12px;
+  margin: auto 0;
 }
 
 .server-toggle-field .switch-field-copy,

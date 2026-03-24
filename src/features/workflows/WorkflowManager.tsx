@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from "react";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { CSS } from "@dnd-kit/utilities";
 import { SectionPanel } from "../../components/layout/SectionPanel";
 import { CustomSelect } from "../../components/ui/CustomSelect";
 import { SwitchField } from "../../components/ui/SwitchField";
@@ -22,11 +26,377 @@ interface WorkflowManagerProps {
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
+  executingWorkflows: Record<string, { status: "running" | "success" | "error"; startedAt: number }>;
+  onViewHistory: (workflow: WorkflowSummaryDto) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
 function getWorkflowSelectionKey(workflow: WorkflowSummaryDto) {
   return `${workflow.server_id}:${workflow.id}`;
+}
+
+interface SortableWorkflowItemProps {
+  workflow: WorkflowSummaryDto;
+  dragEnabled: boolean;
+  managementMode: boolean;
+  selectedWorkflowKeys: string[];
+  openMenuId: string | null;
+  execStatus: { status: "running" | "success" | "error"; startedAt: number } | undefined;
+  setOpenMenuId: (id: string | null | ((current: string | null) => string | null)) => void;
+  handleManagementRowClick: (workflow: WorkflowSummaryDto, event: ReactMouseEvent<HTMLElement>) => void;
+  handleManagementRowKeyDown: (workflow: WorkflowSummaryDto, event: ReactKeyboardEvent<HTMLElement>) => void;
+  toggleWorkflowSelection: (workflow: WorkflowSummaryDto, checked: boolean) => void;
+  props: WorkflowManagerProps;
+}
+
+function SortableWorkflowItem({
+  workflow,
+  dragEnabled,
+  managementMode,
+  selectedWorkflowKeys,
+  openMenuId,
+  execStatus,
+  setOpenMenuId,
+  handleManagementRowClick,
+  handleManagementRowKeyDown,
+  toggleWorkflowSelection,
+  props,
+}: SortableWorkflowItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: workflow.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <article
+      ref={setNodeRef}
+      style={style}
+      key={`${workflow.server_id}-${workflow.id}`}
+      className={`workflow-item is-sortable ${isDragging ? "is-dragging" : ""} ${managementMode ? "is-management-mode" : ""} ${selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow)) ? "is-selected" : ""}`.trim()}
+      data-workflow-id={workflow.id}
+      data-server-id={workflow.server_id}
+    >
+      {dragEnabled ? (
+        <div className="workflow-grip" {...{ ...attributes, ...listeners, style: { cursor: "grab" } }}>
+          <svg width="6" height="18" viewBox="0 0 6 18" fill="currentColor" aria-hidden="true">
+            <circle cx="1.5" cy="2" r="1.2"/><circle cx="4.5" cy="2" r="1.2"/>
+            <circle cx="1.5" cy="7" r="1.2"/><circle cx="4.5" cy="7" r="1.2"/>
+            <circle cx="1.5" cy="12" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/>
+            <circle cx="1.5" cy="17" r="1.2"/><circle cx="4.5" cy="17" r="1.2"/>
+          </svg>
+        </div>
+      ) : null}
+
+      <div
+        className="workflow-main-group"
+        role={managementMode ? "button" : undefined}
+        tabIndex={managementMode ? 0 : undefined}
+        aria-pressed={managementMode ? selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow)) : undefined}
+        onClick={(event) => handleManagementRowClick(workflow, event)}
+        onKeyDown={(event) => handleManagementRowKeyDown(workflow, event)}
+      >
+        {managementMode ? (
+          <label className="workflow-select workflow-select-leading" onClick={(event) => event.stopPropagation()}>
+            <input
+              type="checkbox"
+              className="workflow-select-toggle"
+              checked={selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow))}
+              aria-label={props.t("workflow_select_workflow", { id: workflow.id })}
+              onChange={(event) => toggleWorkflowSelection(workflow, event.target.checked)}
+            />
+            <span className="sr-only">{props.t("workflow_select_workflow", { id: workflow.id })}</span>
+          </label>
+        ) : null}
+
+        <div className="workflow-main">
+          <div className="workflow-name-row">
+            <span className={`status-dot ${workflow.enabled ? "" : "is-disabled"}`} aria-hidden="true">&#x25CF;</span>
+            <span className="workflow-name" title={workflow.id}>{workflow.id}</span>
+            <span className="workflow-server-tag">{workflow.server_name || workflow.server_id}</span>
+            {(() => {
+              if (!execStatus) return null;
+              if (execStatus.status === "running") {
+                return (
+                  <span className="workflow-exec-status is-running">{props.t("workflow_status_running")}</span>
+                );
+              }
+              return (
+                <button
+                  type="button"
+                  className={`workflow-exec-status is-${execStatus.status}`}
+                  title={props.t("workflow_status_view_history")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    props.onViewHistory(workflow);
+                  }}
+                >
+                  {execStatus.status === "success" ? props.t("workflow_status_success") : props.t("workflow_status_error")}
+                </button>
+              );
+            })()}
+          </div>
+          {workflow.description ? <p className="workflow-desc" title={workflow.description}>{workflow.description}</p> : null}
+        </div>
+      </div>
+
+      <div className="workflow-actions">
+        <div className="workflow-status-toggle">
+          <SwitchField
+            ariaLabel={props.t("toggle_workflow", { id: workflow.id })}
+            checked={workflow.enabled}
+            className="workflow-toggle-field"
+            label={(
+              <span className={`workflow-enabled-label ${workflow.enabled ? "status-on" : "status-off"}`}>
+                {workflow.enabled ? props.t("wf_enabled") : props.t("wf_disabled")}
+              </span>
+            )}
+            onChange={(event) => {
+              setOpenMenuId(null);
+              props.onToggleWorkflow(workflow, event.target.checked);
+            }}
+          />
+        </div>
+
+        <div className="workflow-secondary-actions">
+          <button
+            type="button"
+            className="btn btn-secondary btn-icon workflow-action-btn workflow-action-edit"
+            aria-label={props.t("edit_workflow", { id: workflow.id })}
+            onClick={() => {
+              setOpenMenuId(null);
+              props.onEditWorkflow(workflow);
+            }}
+          >
+            <EditIcon />
+          </button>
+
+          <div className={`workflow-more ${openMenuId === workflow.id ? "is-open" : ""}`}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-icon workflow-action-btn workflow-more-trigger"
+              aria-haspopup="menu"
+              aria-expanded={openMenuId === workflow.id}
+              aria-label={props.t("workflow_more_actions", { id: workflow.id })}
+              onClick={(event) => {
+                event.stopPropagation();
+                setOpenMenuId((current: string | null) => current === workflow.id ? null : workflow.id);
+              }}
+            >
+              <MoreIcon />
+            </button>
+            <div className={`workflow-more-menu ${openMenuId === workflow.id ? "" : "hidden"}`} role="menu">
+              <button
+                type="button"
+                className="workflow-more-item"
+                role="menuitem"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  props.onRunWorkflow(workflow);
+                }}
+              >
+                <RunIcon />
+                <span>{props.t("run_workflow_short")}</span>
+              </button>
+              <button
+                type="button"
+                className="workflow-more-item"
+                role="menuitem"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  props.onUploadWorkflowVersion(workflow);
+                }}
+              >
+                <UploadIcon />
+                <span>{props.t("upload_new_version")}</span>
+              </button>
+              <button
+                type="button"
+                className="workflow-more-item workflow-more-item-danger"
+                role="menuitem"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  props.onDeleteWorkflow(workflow);
+                }}
+              >
+                <TrashIcon />
+                <span>{props.t("delete")}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PlainWorkflowItem({
+  workflow,
+  managementMode,
+  selectedWorkflowKeys,
+  openMenuId,
+  execStatus,
+  setOpenMenuId,
+  handleManagementRowClick,
+  handleManagementRowKeyDown,
+  toggleWorkflowSelection,
+  props,
+}: Omit<SortableWorkflowItemProps, "dragEnabled">) {
+  return (
+    <article
+      key={`${workflow.server_id}-${workflow.id}`}
+      className={`workflow-item ${managementMode ? "is-management-mode" : ""} ${selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow)) ? "is-selected" : ""}`.trim()}
+      data-workflow-id={workflow.id}
+      data-server-id={workflow.server_id}
+    >
+      <div
+        className="workflow-main-group"
+        role={managementMode ? "button" : undefined}
+        tabIndex={managementMode ? 0 : undefined}
+        aria-pressed={managementMode ? selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow)) : undefined}
+        onClick={(event) => handleManagementRowClick(workflow, event)}
+        onKeyDown={(event) => handleManagementRowKeyDown(workflow, event)}
+      >
+        {managementMode ? (
+          <label className="workflow-select workflow-select-leading" onClick={(event) => event.stopPropagation()}>
+            <input
+              type="checkbox"
+              className="workflow-select-toggle"
+              checked={selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow))}
+              aria-label={props.t("workflow_select_workflow", { id: workflow.id })}
+              onChange={(event) => toggleWorkflowSelection(workflow, event.target.checked)}
+            />
+            <span className="sr-only">{props.t("workflow_select_workflow", { id: workflow.id })}</span>
+          </label>
+        ) : null}
+
+        <div className="workflow-main">
+          <div className="workflow-name-row">
+            <span className={`status-dot ${workflow.enabled ? "" : "is-disabled"}`} aria-hidden="true">&#x25CF;</span>
+            <span className="workflow-name" title={workflow.id}>{workflow.id}</span>
+            <span className="workflow-server-tag">{workflow.server_name || workflow.server_id}</span>
+            {(() => {
+              if (!execStatus) return null;
+              if (execStatus.status === "running") {
+                return (
+                  <span className="workflow-exec-status is-running">{props.t("workflow_status_running")}</span>
+                );
+              }
+              return (
+                <button
+                  type="button"
+                  className={`workflow-exec-status is-${execStatus.status}`}
+                  title={props.t("workflow_status_view_history")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    props.onViewHistory(workflow);
+                  }}
+                >
+                  {execStatus.status === "success" ? props.t("workflow_status_success") : props.t("workflow_status_error")}
+                </button>
+              );
+            })()}
+          </div>
+          {workflow.description ? <p className="workflow-desc" title={workflow.description}>{workflow.description}</p> : null}
+        </div>
+      </div>
+
+      <div className="workflow-actions">
+        <div className="workflow-status-toggle">
+          <SwitchField
+            ariaLabel={props.t("toggle_workflow", { id: workflow.id })}
+            checked={workflow.enabled}
+            className="workflow-toggle-field"
+            label={(
+              <span className={`workflow-enabled-label ${workflow.enabled ? "status-on" : "status-off"}`}>
+                {workflow.enabled ? props.t("wf_enabled") : props.t("wf_disabled")}
+              </span>
+            )}
+            onChange={(event) => {
+              setOpenMenuId(null);
+              props.onToggleWorkflow(workflow, event.target.checked);
+            }}
+          />
+        </div>
+
+        <div className="workflow-secondary-actions">
+          <button
+            type="button"
+            className="btn btn-secondary btn-icon workflow-action-btn workflow-action-edit"
+            aria-label={props.t("edit_workflow", { id: workflow.id })}
+            onClick={() => {
+              setOpenMenuId(null);
+              props.onEditWorkflow(workflow);
+            }}
+          >
+            <EditIcon />
+          </button>
+
+          <div className={`workflow-more ${openMenuId === workflow.id ? "is-open" : ""}`}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-icon workflow-action-btn workflow-more-trigger"
+              aria-haspopup="menu"
+              aria-expanded={openMenuId === workflow.id}
+              aria-label={props.t("workflow_more_actions", { id: workflow.id })}
+              onClick={(event) => {
+                event.stopPropagation();
+                setOpenMenuId((current: string | null) => current === workflow.id ? null : workflow.id);
+              }}
+            >
+              <MoreIcon />
+            </button>
+            <div className={`workflow-more-menu ${openMenuId === workflow.id ? "" : "hidden"}`} role="menu">
+              <button
+                type="button"
+                className="workflow-more-item"
+                role="menuitem"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  props.onRunWorkflow(workflow);
+                }}
+              >
+                <RunIcon />
+                <span>{props.t("run_workflow_short")}</span>
+              </button>
+              <button
+                type="button"
+                className="workflow-more-item"
+                role="menuitem"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  props.onUploadWorkflowVersion(workflow);
+                }}
+              >
+                <UploadIcon />
+                <span>{props.t("upload_new_version")}</span>
+              </button>
+              <button
+                type="button"
+                className="workflow-more-item workflow-more-item-danger"
+                role="menuitem"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  props.onDeleteWorkflow(workflow);
+                }}
+              >
+                <TrashIcon />
+                <span>{props.t("delete")}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
 }
 
 export function WorkflowManager(props: WorkflowManagerProps) {
@@ -35,6 +405,10 @@ export function WorkflowManager(props: WorkflowManagerProps) {
   const [managementMode, setManagementMode] = useState(false);
   const [selectedWorkflowKeys, setSelectedWorkflowKeys] = useState<string[]>([]);
   const dragEnabled = props.sort === "custom" && !props.search.trim() && !managementMode;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
 
   function onEmptyUploadInputChange(event: ChangeEvent<HTMLInputElement>) {
     props.onCreateWorkflowFromFile(event.target.files?.[0] || null);
@@ -83,11 +457,9 @@ export function WorkflowManager(props: WorkflowManagerProps) {
     });
 
   const sortOptions = useMemo(() => [
-    { value: "custom", label: props.t("workflow_sort_custom") },
     { value: "updated_desc", label: props.t("workflow_sort_recent") },
-    { value: "name_asc", label: props.t("workflow_sort_name_asc") },
-    { value: "name_desc", label: props.t("workflow_sort_name_desc") },
-    { value: "enabled_first", label: props.t("workflow_sort_enabled") },
+    { value: "name_asc", label: props.t("workflow_sort_name") },
+    { value: "custom", label: props.t("workflow_sort_custom") },
   ], [props.t]);
 
   const selectedWorkflows = useMemo(
@@ -138,6 +510,108 @@ export function WorkflowManager(props: WorkflowManagerProps) {
   function closeManagementMode() {
     setManagementMode(false);
     setSelectedWorkflowKeys([]);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+    const activeIndex = props.workflows.findIndex((w) => w.id === active.id);
+    const overIndex = props.workflows.findIndex((w) => w.id === over.id);
+    if (activeIndex === -1 || overIndex === -1) {
+      return;
+    }
+    const placeAfter = activeIndex < overIndex;
+    props.onReorderWorkflows(String(active.id), String(over.id), placeAfter);
+  }
+
+  const workflowIds = useMemo(() => props.workflows.map((w) => w.id), [props.workflows]);
+
+  function renderWorkflowList() {
+    if (props.workflows.length === 0) {
+      if (props.allWorkflowsForCurrentServer) {
+        return <div className="empty-state">{props.t("no_workflows_match")}</div>;
+      }
+      return (
+        <label
+          className={`upload-zone workflow-empty-upload${emptyUploadDragActive ? " is-dragging" : ""}`}
+          htmlFor="workflow-empty-upload"
+          tabIndex={0}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setEmptyUploadDragActive(true);
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setEmptyUploadDragActive(true);
+          }}
+          onDragLeave={(event) => {
+            event.preventDefault();
+            setEmptyUploadDragActive(false);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            setEmptyUploadDragActive(false);
+            props.onCreateWorkflowFromFile(event.dataTransfer.files?.[0] || null);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              const input = document.getElementById("workflow-empty-upload");
+              if (input instanceof HTMLInputElement) {
+                input.click();
+              }
+            }
+          }}
+        >
+          <input id="workflow-empty-upload" type="file" accept=".json" onChange={onEmptyUploadInputChange} />
+          <span className="upload-title">{props.t("drag_upload")}</span>
+          <span className="upload-subtitle">{props.t("after_upload")}</span>
+        </label>
+      );
+    }
+
+    const itemProps = (workflow: WorkflowSummaryDto) => ({
+      workflow,
+      managementMode,
+      selectedWorkflowKeys,
+      openMenuId,
+      execStatus: props.executingWorkflows[`${workflow.server_id}:${workflow.id}`],
+      setOpenMenuId: setOpenMenuId as (id: string | null | ((current: string | null) => string | null)) => void,
+      handleManagementRowClick,
+      handleManagementRowKeyDown,
+      toggleWorkflowSelection,
+      props,
+    });
+
+    if (dragEnabled) {
+      return (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={workflowIds} strategy={verticalListSortingStrategy}>
+            {props.workflows.map((workflow) => (
+              <SortableWorkflowItem
+                key={`${workflow.server_id}-${workflow.id}`}
+                dragEnabled={dragEnabled}
+                {...itemProps(workflow)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      );
+    }
+
+    return props.workflows.map((workflow) => (
+      <PlainWorkflowItem
+        key={`${workflow.server_id}-${workflow.id}`}
+        {...itemProps(workflow)}
+      />
+    ));
   }
 
   return (
@@ -227,222 +701,7 @@ export function WorkflowManager(props: WorkflowManagerProps) {
       ) : null}
 
       <div className="workflow-list" aria-live="polite">
-        {props.workflows.length === 0 ? (
-          props.allWorkflowsForCurrentServer ? (
-            <div className="empty-state">{props.t("no_workflows_match")}</div>
-          ) : (
-            <label
-              className={`upload-zone workflow-empty-upload${emptyUploadDragActive ? " is-dragging" : ""}`}
-              htmlFor="workflow-empty-upload"
-              tabIndex={0}
-              onDragEnter={(event) => {
-                event.preventDefault();
-                setEmptyUploadDragActive(true);
-              }}
-              onDragOver={(event) => {
-                event.preventDefault();
-                setEmptyUploadDragActive(true);
-              }}
-              onDragLeave={(event) => {
-                event.preventDefault();
-                setEmptyUploadDragActive(false);
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                setEmptyUploadDragActive(false);
-                props.onCreateWorkflowFromFile(event.dataTransfer.files?.[0] || null);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  const input = document.getElementById("workflow-empty-upload");
-                  if (input instanceof HTMLInputElement) {
-                    input.click();
-                  }
-                }
-              }}
-            >
-              <input id="workflow-empty-upload" type="file" accept=".json" onChange={onEmptyUploadInputChange} />
-              <span className="upload-title">{props.t("drag_upload")}</span>
-              <span className="upload-subtitle">{props.t("after_upload")}</span>
-            </label>
-          )
-        ) : props.workflows.map((workflow) => (
-          <article
-            key={`${workflow.server_id}-${workflow.id}`}
-            className={`workflow-item ${dragEnabled ? "is-reorderable" : ""} ${managementMode ? "is-management-mode" : ""} ${selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow)) ? "is-selected" : ""}`.trim()}
-            data-workflow-id={workflow.id}
-            data-server-id={workflow.server_id}
-            onDragOver={(event) => {
-              if (!dragEnabled) {
-                return;
-              }
-              event.preventDefault();
-              (event.currentTarget as HTMLElement).classList.add("is-drop-target");
-            }}
-            onDragLeave={(event) => {
-              (event.currentTarget as HTMLElement).classList.remove("is-drop-target");
-            }}
-            onDrop={(event) => {
-              if (!dragEnabled) {
-                return;
-              }
-              event.preventDefault();
-              const target = event.currentTarget as HTMLElement;
-              target.classList.remove("is-drop-target");
-              const sourceWorkflowId = event.dataTransfer.getData("text/plain");
-              if (!sourceWorkflowId || sourceWorkflowId === workflow.id) {
-                return;
-              }
-              const rect = target.getBoundingClientRect();
-              props.onReorderWorkflows(sourceWorkflowId, workflow.id, event.clientY > rect.top + rect.height / 2);
-            }}
-          >
-            <div
-              className="workflow-main-group"
-              role={managementMode ? "button" : undefined}
-              tabIndex={managementMode ? 0 : undefined}
-              aria-pressed={managementMode ? selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow)) : undefined}
-              onClick={(event) => handleManagementRowClick(workflow, event)}
-              onKeyDown={(event) => handleManagementRowKeyDown(workflow, event)}
-            >
-              {managementMode ? (
-                <label className="workflow-select workflow-select-leading" onClick={(event) => event.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    className="workflow-select-toggle"
-                    checked={selectedWorkflowKeys.includes(getWorkflowSelectionKey(workflow))}
-                    aria-label={props.t("workflow_select_workflow", { id: workflow.id })}
-                    onChange={(event) => toggleWorkflowSelection(workflow, event.target.checked)}
-                  />
-                  <span className="sr-only">{props.t("workflow_select_workflow", { id: workflow.id })}</span>
-                </label>
-              ) : null}
-
-              <div className="workflow-main">
-                <div className="workflow-name-row">
-                  <span className={`status-dot ${workflow.enabled ? "" : "is-disabled"}`} aria-hidden="true">&#x25CF;</span>
-                  <span className="workflow-name">{workflow.id}</span>
-                  <span className="workflow-server-tag">{workflow.server_name || workflow.server_id}</span>
-                </div>
-                {workflow.description ? <p className="workflow-desc">{workflow.description}</p> : null}
-              </div>
-            </div>
-
-            <div className="workflow-actions">
-              {props.sort === "custom" && !managementMode ? (
-                <button
-                  type="button"
-                  className={`btn btn-secondary btn-icon workflow-drag-handle ${dragEnabled ? "" : "is-disabled"}`}
-                  draggable={dragEnabled}
-                  aria-label={props.t("workflow_drag_handle", { id: workflow.id })}
-                  title={props.t("workflow_drag_handle", { id: workflow.id })}
-                  tabIndex={-1}
-                  onDragStart={(event) => {
-                    if (!dragEnabled) {
-                      event.preventDefault();
-                      return;
-                    }
-                    event.currentTarget.closest(".workflow-item")?.classList.add("is-dragging");
-                    event.dataTransfer.effectAllowed = "move";
-                    event.dataTransfer.setData("text/plain", workflow.id);
-                  }}
-                  onDragEnd={(event) => {
-                    event.currentTarget.closest(".workflow-item")?.classList.remove("is-dragging");
-                    document.querySelectorAll(".workflow-item.is-drop-target").forEach((item) => item.classList.remove("is-drop-target"));
-                  }}
-                >
-                  <span aria-hidden="true">&#x2261;</span>
-                </button>
-              ) : null}
-
-              <div className="workflow-status-toggle">
-                <SwitchField
-                  ariaLabel={props.t("toggle_workflow", { id: workflow.id })}
-                  checked={workflow.enabled}
-                  className="workflow-toggle-field"
-                  label={(
-                    <span className={`workflow-enabled-label ${workflow.enabled ? "status-on" : "status-off"}`}>
-                      {workflow.enabled ? props.t("wf_enabled") : props.t("wf_disabled")}
-                    </span>
-                  )}
-                  onChange={(event) => {
-                    setOpenMenuId(null);
-                    props.onToggleWorkflow(workflow, event.target.checked);
-                  }}
-                />
-              </div>
-
-              <div className="workflow-secondary-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-icon workflow-action-btn workflow-action-edit"
-                  aria-label={props.t("edit_workflow", { id: workflow.id })}
-                  onClick={() => {
-                    setOpenMenuId(null);
-                    props.onEditWorkflow(workflow);
-                  }}
-                >
-                  <EditIcon />
-                </button>
-
-                <div className={`workflow-more ${openMenuId === workflow.id ? "is-open" : ""}`}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-icon workflow-action-btn workflow-more-trigger"
-                    aria-haspopup="menu"
-                    aria-expanded={openMenuId === workflow.id}
-                    aria-label={props.t("workflow_more_actions", { id: workflow.id })}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setOpenMenuId((current) => current === workflow.id ? null : workflow.id);
-                    }}
-                  >
-                    <MoreIcon />
-                  </button>
-                  <div className={`workflow-more-menu ${openMenuId === workflow.id ? "" : "hidden"}`} role="menu">
-                    <button
-                      type="button"
-                      className="workflow-more-item"
-                      role="menuitem"
-                      onClick={() => {
-                        setOpenMenuId(null);
-                        props.onRunWorkflow(workflow);
-                      }}
-                    >
-                      <RunIcon />
-                      <span>{props.t("run_workflow_short")}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="workflow-more-item"
-                      role="menuitem"
-                      onClick={() => {
-                        setOpenMenuId(null);
-                        props.onUploadWorkflowVersion(workflow);
-                      }}
-                    >
-                      <UploadIcon />
-                      <span>{props.t("upload_new_version")}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="workflow-more-item workflow-more-item-danger"
-                      role="menuitem"
-                      onClick={() => {
-                        setOpenMenuId(null);
-                        props.onDeleteWorkflow(workflow);
-                      }}
-                    >
-                      <TrashIcon />
-                      <span>{props.t("delete")}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-        ))}
+        {renderWorkflowList()}
       </div>
     </SectionPanel>
   );
