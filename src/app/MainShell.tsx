@@ -32,6 +32,7 @@ interface MainShellProps {
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
+  executingWorkflows: Record<string, { status: "running" | "success" | "error"; startedAt: number }>;
   t: TranslateFn;
 }
 
@@ -71,6 +72,7 @@ export function MainShell(props: MainShellProps) {
         onToggleWorkflow={props.onToggleWorkflow}
         onUploadWorkflowVersion={props.onUploadWorkflowVersion}
         onReorderWorkflows={props.onReorderWorkflows}
+        executingWorkflows={props.executingWorkflows}
         t={props.t}
       />
     </>

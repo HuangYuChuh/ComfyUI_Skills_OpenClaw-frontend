@@ -432,6 +432,34 @@ button:disabled,
   font-weight: 500;
 }
 
+.workflow-exec-status {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  animation: exec-status-fade-in 0.2s ease;
+}
+
+.workflow-exec-status.is-running {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.workflow-exec-status.is-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+.workflow-exec-status.is-error {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+}
+
+@keyframes exec-status-fade-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .workflow-desc {
   font-size: 0.88rem;
   line-height: 1.4;

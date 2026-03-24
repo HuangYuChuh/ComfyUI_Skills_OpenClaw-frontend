@@ -79,6 +79,7 @@ function renderWorkflowManager(overrides: Partial<ComponentProps<typeof Workflow
     onToggleWorkflow: vi.fn(),
     onUploadWorkflowVersion: vi.fn(),
     onReorderWorkflows: vi.fn(),
+    executingWorkflows: {},
     t,
     ...overrides,
   };

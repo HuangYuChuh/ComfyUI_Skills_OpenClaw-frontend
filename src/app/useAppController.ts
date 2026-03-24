@@ -68,6 +68,7 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
   const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null);
   const [updateFeedback, setUpdateFeedback] = useState<StoredUpdateFeedback | null>(null);
   const [runModalState, setRunModalState] = useState<RunWorkflowState>(initialRunWorkflowState());
+  const [executingWorkflows, setExecutingWorkflows] = useState<Record<string, { status: "running" | "success" | "error"; startedAt: number }>>({});
   const [historyState, setHistoryState] = useState<WorkflowHistoryState>(initialWorkflowHistoryState());
 
   const versionUploadRef = useRef<HTMLInputElement | null>(null);
@@ -484,27 +485,36 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
       }
     });
 
-    setRunModalState((current) => ({ ...current, submitting: true, result: null }));
+    const workflowKey = `${workflow.server_id}:${workflow.id}`;
+    setExecutingWorkflows((current) => ({ ...current, [workflowKey]: { status: "running", startedAt: Date.now() } }));
+    closeRunWorkflowModal();
+
     try {
       const response = await runWorkflow(workflow.server_id, workflow.id, payload);
-      setRunModalState((current) => ({
-        ...current,
-        submitting: false,
-        result: response.result,
-      }));
       if (response.result.status === "success") {
         markWorkflowHasHistory(workflow);
+        setExecutingWorkflows((current) => ({ ...current, [workflowKey]: { ...current[workflowKey], status: "success" } }));
         pushToast("success", t("run_workflow_success", { id: workflow.id }));
       } else {
         const errMsg = typeof response.result.error === "string"
           ? response.result.error
           : (response.result.error as Record<string, unknown>)?.message as string | undefined;
+        setExecutingWorkflows((current) => ({ ...current, [workflowKey]: { ...current[workflowKey], status: "error" } }));
         pushToast("error", errMsg || t("run_workflow_error"));
       }
     } catch (error) {
-      setRunModalState((current) => ({ ...current, submitting: false }));
+      setExecutingWorkflows((current) => ({ ...current, [workflowKey]: { ...current[workflowKey], status: "error" } }));
       pushToast("error", error instanceof Error ? error.message : t("run_workflow_error"));
     }
+
+    // Auto-clear status after 8 seconds
+    setTimeout(() => {
+      setExecutingWorkflows((current) => {
+        const next = { ...current };
+        delete next[workflowKey];
+        return next;
+      });
+    }, 8000);
   }
 
   async function loadWorkflowHistory(workflow: WorkflowSummaryDto, selectedRunId?: string | null) {
@@ -717,6 +727,7 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     toggleTransferServerExpanded,
     setTransferState,
     runModalState,
+    executingWorkflows,
     historyState,
     handleOpenRunWorkflow,
     closeRunWorkflowModal,

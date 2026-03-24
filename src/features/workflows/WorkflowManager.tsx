@@ -22,6 +22,7 @@ interface WorkflowManagerProps {
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
   onUploadWorkflowVersion: (workflow: WorkflowSummaryDto) => void;
   onReorderWorkflows: (sourceWorkflowId: string, targetWorkflowId: string, placeAfter: boolean) => void;
+  executingWorkflows: Record<string, { status: "running" | "success" | "error"; startedAt: number }>;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
@@ -324,6 +325,17 @@ export function WorkflowManager(props: WorkflowManagerProps) {
                   <span className={`status-dot ${workflow.enabled ? "" : "is-disabled"}`} aria-hidden="true">&#x25CF;</span>
                   <span className="workflow-name">{workflow.id}</span>
                   <span className="workflow-server-tag">{workflow.server_name || workflow.server_id}</span>
+                  {(() => {
+                    const execState = props.executingWorkflows[`${workflow.server_id}:${workflow.id}`];
+                    if (!execState) return null;
+                    return (
+                      <span className={`workflow-exec-status is-${execState.status}`}>
+                        {execState.status === "running" ? props.t("workflow_status_running")
+                          : execState.status === "success" ? props.t("workflow_status_success")
+                          : props.t("workflow_status_error")}
+                      </span>
+                    );
+                  })()}
                 </div>
                 {workflow.description ? <p className="workflow-desc">{workflow.description}</p> : null}
               </div>
