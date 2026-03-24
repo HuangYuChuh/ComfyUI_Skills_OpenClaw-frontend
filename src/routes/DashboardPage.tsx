@@ -92,6 +92,7 @@ export function DashboardPage({ controller }: DashboardPageProps) {
         onUploadWorkflowVersion={controller.handleUploadWorkflowVersion}
         onReorderWorkflows={controller.handleReorderWorkflows}
         executingWorkflows={controller.executingWorkflows}
+        onViewHistory={controller.handleOpenWorkflowHistory}
         t={controller.t}
       />
     </AppLayout>

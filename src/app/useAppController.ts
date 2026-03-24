@@ -62,7 +62,7 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
   const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
   const [expandedParamKeys, setExpandedParamKeys] = useState<Set<string>>(new Set());
   const [workflowSearch, setWorkflowSearch] = useState("");
-  const [workflowSort, setWorkflowSort] = useState("custom");
+  const [workflowSort, setWorkflowSort] = useState("updated_desc");
   const [lastAutoWorkflowId, setLastAutoWorkflowId] = useState("");
   const [transferState, setTransferState] = useState<TransferState>(initialTransferState());
   const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null);

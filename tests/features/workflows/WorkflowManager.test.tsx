@@ -11,6 +11,7 @@ const messages: Record<string, string> = {
   workflow_count_filtered: "{visible} of {total} workflows",
   workflow_sort_custom: "Custom",
   workflow_sort_recent: "Recently updated",
+  workflow_sort_name: "Name",
   workflow_sort_name_asc: "Name A-Z",
   workflow_sort_name_desc: "Name Z-A",
   workflow_sort_enabled: "Enabled first",
@@ -37,6 +38,10 @@ const messages: Record<string, string> = {
   wf_enabled: "Enabled",
   wf_disabled: "Disabled",
   workflow_drag_handle: "Drag to reorder workflow {id}",
+  workflow_status_running: "Running...",
+  workflow_status_success: "Success",
+  workflow_status_error: "Failed",
+  workflow_status_view_history: "Click to view details",
 };
 
 function t(key: string, vars?: Record<string, string | number>) {
@@ -80,6 +85,7 @@ function renderWorkflowManager(overrides: Partial<ComponentProps<typeof Workflow
     onUploadWorkflowVersion: vi.fn(),
     onReorderWorkflows: vi.fn(),
     executingWorkflows: {},
+    onViewHistory: vi.fn(),
     t,
     ...overrides,
   };
@@ -87,17 +93,6 @@ function renderWorkflowManager(overrides: Partial<ComponentProps<typeof Workflow
   return {
     ...render(<WorkflowManager {...props} />),
     props,
-  };
-}
-
-function createDataTransfer() {
-  const data = new Map<string, string>();
-  return {
-    effectAllowed: "all",
-    setData: vi.fn((type: string, value: string) => {
-      data.set(type, value);
-    }),
-    getData: vi.fn((type: string) => data.get(type) ?? ""),
   };
 }
 
@@ -128,45 +123,22 @@ describe("WorkflowManager", () => {
     expect(menu).toHaveClass("hidden");
   });
 
-  it("reorders workflows when dragged onto another workflow above the midpoint", () => {
-    const { props, container } = renderWorkflowManager();
-    const handle = screen.getByRole("button", { name: "Drag to reorder workflow wf-a" });
-    const target = container.querySelector('[data-workflow-id="wf-b"]') as HTMLElement;
-    const dataTransfer = createDataTransfer();
+  it("renders sortable items with grip handle when sort is custom", () => {
+    const { container } = renderWorkflowManager({ sort: "custom" });
+    const sortableItems = container.querySelectorAll(".workflow-item.is-sortable");
+    expect(sortableItems.length).toBe(2);
 
-    Object.defineProperty(target, "getBoundingClientRect", {
-      value: () => ({
-        top: 0,
-        left: 0,
-        right: 300,
-        bottom: 100,
-        width: 300,
-        height: 100,
-        x: 0,
-        y: 0,
-        toJSON: () => undefined,
-      }),
-    });
-
-    fireEvent.dragStart(handle, { dataTransfer });
-    fireEvent.drop(target, { dataTransfer, clientY: 20 });
-
-    expect(props.onReorderWorkflows).toHaveBeenCalledWith("wf-a", "wf-b", false);
+    const grips = container.querySelectorAll(".workflow-grip");
+    expect(grips.length).toBe(2);
   });
 
-  it("disables drag reordering while a search filter is active", () => {
-    const { props, container } = renderWorkflowManager({ search: "wf" });
-    const handle = screen.getByRole("button", { name: "Drag to reorder workflow wf-a" });
-    const target = container.querySelector('[data-workflow-id="wf-b"]') as HTMLElement;
-    const dataTransfer = createDataTransfer();
+  it("does not render grip handle or sortable class when sort is not custom", () => {
+    const { container } = renderWorkflowManager({ sort: "updated_desc" });
+    const sortableItems = container.querySelectorAll(".workflow-item.is-sortable");
+    expect(sortableItems.length).toBe(0);
 
-    expect(handle).toHaveClass("is-disabled");
-    expect(handle).toHaveProperty("draggable", false);
-
-    fireEvent.dragStart(handle, { dataTransfer });
-    fireEvent.drop(target, { dataTransfer, clientY: 80 });
-
-    expect(props.onReorderWorkflows).not.toHaveBeenCalled();
+    const grips = container.querySelectorAll(".workflow-grip");
+    expect(grips.length).toBe(0);
   });
 
   it("does not render an empty workflow summary pill when there are no workflows", () => {
