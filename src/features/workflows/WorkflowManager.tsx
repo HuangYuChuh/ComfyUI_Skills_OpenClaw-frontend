@@ -373,20 +373,6 @@ export function WorkflowManager(props: WorkflowManagerProps) {
                 />
               </div>
 
-              <div className="workflow-primary-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-icon workflow-action-btn workflow-run-btn"
-                  aria-label={props.t("run_workflow_short")}
-                  onClick={() => {
-                    setOpenMenuId(null);
-                    props.onRunWorkflow(workflow);
-                  }}
-                >
-                  <RunIcon />
-                </button>
-              </div>
-
               <div className="workflow-secondary-actions">
                 <button
                   type="button"
@@ -415,6 +401,18 @@ export function WorkflowManager(props: WorkflowManagerProps) {
                     <MoreIcon />
                   </button>
                   <div className={`workflow-more-menu ${openMenuId === workflow.id ? "" : "hidden"}`} role="menu">
+                    <button
+                      type="button"
+                      className="workflow-more-item"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenuId(null);
+                        props.onRunWorkflow(workflow);
+                      }}
+                    >
+                      <RunIcon />
+                      <span>{props.t("run_workflow_short")}</span>
+                    </button>
                     <button
                       type="button"
                       className="workflow-more-item"

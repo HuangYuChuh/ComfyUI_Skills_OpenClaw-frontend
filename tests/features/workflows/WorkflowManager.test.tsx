@@ -30,6 +30,7 @@ const messages: Record<string, string> = {
   drag_upload: "Drag or click to upload ComfyUI workflow_api.json",
   after_upload: "After upload, you can remap parameters by node.",
   workflow_more_actions: "More actions for workflow {id}",
+  run_workflow_short: "Run",
   upload_new_version: "Upload New Version",
   edit_workflow: "Edit workflow {id}",
   toggle_workflow: "Toggle workflow {id}",
@@ -116,10 +117,11 @@ describe("WorkflowManager", () => {
     expect(menu).toHaveClass("hidden");
 
     await user.click(trigger);
-    const uploadItem = trigger
+    const menuItems = trigger
       .closest(".workflow-more")
-      ?.querySelector('.workflow-more-item[role="menuitem"]') as HTMLElement;
-    await user.click(uploadItem);
+      ?.querySelectorAll('.workflow-more-item[role="menuitem"]') as NodeListOf<HTMLElement>;
+    // menu order: Run, Upload New Version, Delete
+    await user.click(menuItems[1]);
 
     expect(props.onUploadWorkflowVersion).toHaveBeenCalledWith(workflows[0]);
     expect(menu).toHaveClass("hidden");
