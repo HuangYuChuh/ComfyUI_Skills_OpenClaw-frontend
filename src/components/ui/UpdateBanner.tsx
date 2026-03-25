@@ -39,11 +39,26 @@ function buildFeedbackMessage(feedback: StoredUpdateFeedback, t: UpdateBannerPro
 export function buildCacheBustedReloadUrl(location: Location, timestamp = Date.now()) {
   const url = new URL(location.href);
   url.searchParams.set("__ui_reload", String(timestamp));
+  // Remove recovery param if present from a previous cycle
+  url.searchParams.delete("__ui_recovery");
   return url.toString();
 }
 
 export function replaceWindowLocation(url: string) {
   window.location.replace(url);
+}
+
+/**
+ * Remove internal __ui_reload / __ui_recovery params from the visible URL
+ * after the app has mounted successfully. Call once from the app root.
+ */
+export function cleanInternalUrlParams() {
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("__ui_reload") || url.searchParams.has("__ui_recovery")) {
+    url.searchParams.delete("__ui_reload");
+    url.searchParams.delete("__ui_recovery");
+    window.history.replaceState(null, "", url.toString());
+  }
 }
 
 export function UpdateBanner({ localCommit, remoteCommit, feedback, onDismiss, t }: UpdateBannerProps) {
