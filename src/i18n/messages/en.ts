@@ -9,7 +9,7 @@ export const enMessages = {
   workflow_manager: "Workflow Manager",
   workflow_search_placeholder: "Search workflows by name or description",
   workflow_sort_custom: "Manual",
-  workflow_sort_recent: "Recent",
+  workflow_sort_recent: "Recently Updated",
   workflow_sort_name: "Name",
   workflow_sort_name_asc: "Workflow ID (A-Z)",
   workflow_sort_name_desc: "Workflow ID (Z-A)",
