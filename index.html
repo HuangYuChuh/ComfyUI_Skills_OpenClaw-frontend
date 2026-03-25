@@ -90,6 +90,13 @@
         window.setTimeout(function () {
           var root = document.getElementById("root");
           if (rootHasRenderedContent(root)) {
+            // App loaded successfully — clean internal params from URL
+            var cleanUrl = new URL(window.location.href);
+            if (cleanUrl.searchParams.has(RELOAD_PARAM) || cleanUrl.searchParams.has(RECOVERY_PARAM)) {
+              cleanUrl.searchParams.delete(RELOAD_PARAM);
+              cleanUrl.searchParams.delete(RECOVERY_PARAM);
+              window.history.replaceState(null, "", cleanUrl.toString());
+            }
             return;
           }
 
