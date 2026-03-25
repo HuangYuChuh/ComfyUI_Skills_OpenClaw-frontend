@@ -262,6 +262,7 @@ export function ServerManager(props: ServerManagerProps) {
               value={props.form.name}
               onChange={onInputChange("name")}
               placeholder={props.t("new_server_name_placeholder")}
+              maxLength={32}
               autoComplete="off"
             />
           </FieldShell>
