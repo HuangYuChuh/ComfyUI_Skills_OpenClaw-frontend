@@ -14,6 +14,7 @@ import { useServerManagement } from "./useServerManagement";
 import { useToastState } from "./useToastState";
 import { createEditorActions } from "./editorActions";
 import { useBulkWorkflowImport } from "./useBulkWorkflowImport";
+import { useDependencyCheck } from "./useDependencyCheck";
 import { useRequestTracker } from "./hooks/useRequestTracker";
 import {
   createFullExportSelection,
@@ -107,6 +108,8 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     pushToast,
     t,
   });
+
+  const depCheck = useDependencyCheck({ pushToast, t });
 
   async function handleSubmitServerModal(importAfterCreate = false) {
     await serverManagement.handleSubmitServerModal(importAfterCreate, bulkWorkflowImport.handleImportAllFromComfyUI);
@@ -722,6 +725,11 @@ export function useAppController({ isEditorRoute }: { isEditorRoute: boolean }) 
     handleOpenLocalImportFiles: bulkWorkflowImport.handleOpenLocalImportFiles,
     handleOpenLocalImportFolder: bulkWorkflowImport.handleOpenLocalImportFolder,
     handleLocalImportFilesChange: bulkWorkflowImport.handleLocalImportFilesChange,
+    depCheckState: depCheck.depCheckState,
+    closeDependencyCheckModal: depCheck.closeDependencyCheckModal,
+    handleCheckDependencies: depCheck.handleCheckDependencies,
+    handleCheckSavedWorkflow: depCheck.handleCheckSavedWorkflow,
+    handleInstallDependencies: depCheck.handleInstallDependencies,
     toggleTransferServerSelection,
     toggleTransferWorkflowSelection,
     toggleTransferServerExpanded,

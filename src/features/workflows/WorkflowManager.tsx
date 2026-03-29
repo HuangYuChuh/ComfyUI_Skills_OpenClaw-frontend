@@ -8,7 +8,7 @@ import { CustomSelect } from "../../components/ui/CustomSelect";
 import { SwitchField } from "../../components/ui/SwitchField";
 import { TextField } from "../../components/ui/TextField";
 import type { WorkflowSummaryDto } from "../../types/api";
-import { EditIcon, MoreIcon, RunIcon, TrashIcon, UploadIcon } from "./components/WorkflowIcons";
+import { DependencyCheckIcon, EditIcon, MoreIcon, RunIcon, TrashIcon, UploadIcon } from "./components/WorkflowIcons";
 
 interface WorkflowManagerProps {
   workflows: WorkflowSummaryDto[];
@@ -21,6 +21,7 @@ interface WorkflowManagerProps {
   onCreateWorkflowFromFile: (file: File | null) => void;
   onEditWorkflow: (workflow: WorkflowSummaryDto) => void;
   onRunWorkflow: (workflow: WorkflowSummaryDto) => void;
+  onCheckDependencies?: (workflow: WorkflowSummaryDto) => void;
   onBatchDeleteWorkflows: (workflows: WorkflowSummaryDto[]) => void;
   onDeleteWorkflow: (workflow: WorkflowSummaryDto) => void;
   onToggleWorkflow: (workflow: WorkflowSummaryDto, enabled: boolean) => void;
@@ -212,6 +213,18 @@ function SortableWorkflowItem({
                 role="menuitem"
                 onClick={() => {
                   setOpenMenuId(null);
+                  props.onCheckDependencies?.(workflow);
+                }}
+              >
+                <DependencyCheckIcon />
+                <span>{props.t("dep_check_btn")}</span>
+              </button>
+              <button
+                type="button"
+                className="workflow-more-item"
+                role="menuitem"
+                onClick={() => {
+                  setOpenMenuId(null);
                   props.onUploadWorkflowVersion(workflow);
                 }}
               >
@@ -366,6 +379,18 @@ function PlainWorkflowItem({
               >
                 <RunIcon />
                 <span>{props.t("run_workflow_short")}</span>
+              </button>
+              <button
+                type="button"
+                className="workflow-more-item"
+                role="menuitem"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  props.onCheckDependencies?.(workflow);
+                }}
+              >
+                <DependencyCheckIcon />
+                <span>{props.t("dep_check_btn")}</span>
               </button>
               <button
                 type="button"

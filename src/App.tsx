@@ -5,6 +5,7 @@ import { UpdateBanner } from "./components/ui/UpdateBanner";
 import { TransferModal } from "./features/transfer/TransferModal";
 import { ComfyUiImportPreviewModal } from "./features/workflows/ComfyUiImportPreviewModal";
 import { BulkImportReportModal } from "./features/workflows/BulkImportReportModal";
+import { DependencyCheckModal } from "./features/workflows/DependencyCheckModal";
 import { RunWorkflowModal } from "./features/workflows/RunWorkflowModal";
 import { WorkflowHistoryModal } from "./features/workflows/WorkflowHistoryModal";
 import { useAppController } from "./app/useAppController";
@@ -70,6 +71,22 @@ function AppContent() {
         report={controller.bulkImportState.report}
         source={controller.bulkImportState.source}
         onClose={controller.closeBulkImportModal}
+        t={controller.t}
+      />
+
+      <DependencyCheckModal
+        open={controller.depCheckState.open}
+        report={controller.depCheckState.report}
+        loading={controller.depCheckState.loading}
+        installing={controller.depCheckState.installing}
+        installReport={controller.depCheckState.installReport}
+        onClose={controller.closeDependencyCheckModal}
+        onInstall={(repoUrls) => {
+          const serverId = controller.currentServer?.id;
+          if (serverId) {
+            void controller.handleInstallDependencies(serverId, repoUrls);
+          }
+        }}
         t={controller.t}
       />
 
