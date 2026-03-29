@@ -128,6 +128,50 @@ export interface BulkImportPreviewReportDto {
   items: BulkImportPreviewItemDto[];
 }
 
+// ── Dependency Check ────────────────────────────────────────
+
+export interface MissingNodeDto {
+  class_type: string;
+  source_repo: string | null;
+  package_name: string | null;
+  can_auto_install: boolean;
+}
+
+export interface MissingModelDto {
+  filename: string;
+  folder: string;
+  loader_node: string;
+  node_id: string;
+}
+
+export interface DependencyReportDto {
+  is_ready: boolean;
+  missing_nodes: MissingNodeDto[];
+  missing_models: MissingModelDto[];
+  total_nodes_required: number;
+  total_models_required: number;
+  summary: string;
+}
+
+export interface InstallResultDto {
+  success: boolean;
+  package_name: string;
+  repo_url: string;
+  message: string;
+  method: string;
+  needs_restart: boolean;
+}
+
+export interface InstallReportDto {
+  results: InstallResultDto[];
+  needs_restart: boolean;
+  summary: {
+    total: number;
+    succeeded: number;
+    failed: number;
+  };
+}
+
 export interface TogglePayload {
   enabled: boolean;
 }

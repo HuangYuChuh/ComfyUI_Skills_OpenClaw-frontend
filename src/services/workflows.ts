@@ -1,8 +1,10 @@
 import type {
   BulkImportPreviewReportDto,
   BulkImportReportDto,
+  DependencyReportDto,
   ExecutionHistoryDetailDto,
   ExecutionHistorySummaryDto,
+  InstallReportDto,
   LocalWorkflowImportFilePayload,
   RunWorkflowResponseDto,
   SaveWorkflowPayload,
@@ -124,4 +126,27 @@ export function importLocalWorkflows(serverId: string, files: LocalWorkflowImpor
     method: "POST",
     body: JSON.stringify({ files }),
   });
+}
+
+// ── Dependency Check ────────────────────────────────────────
+
+export function checkWorkflowDependencies(serverId: string, workflowData: Record<string, unknown>) {
+  return requestJson<{ status: string; report: DependencyReportDto }>(
+    `/api/servers/${encodeURIComponent(serverId)}/workflows/check-dependencies`,
+    { method: "POST", body: JSON.stringify({ workflow_data: workflowData }) },
+  );
+}
+
+export function checkSavedWorkflowDependencies(serverId: string, workflowId: string) {
+  return requestJson<{ status: string; report: DependencyReportDto }>(
+    `/api/servers/${encodeURIComponent(serverId)}/workflows/${encodeURIComponent(workflowId)}/check-dependencies`,
+    { method: "POST" },
+  );
+}
+
+export function installDependencies(serverId: string, repoUrls: string[]) {
+  return requestJson<{ status: string; report: InstallReportDto }>(
+    `/api/servers/${encodeURIComponent(serverId)}/install-dependencies`,
+    { method: "POST", body: JSON.stringify({ repo_urls: repoUrls }) },
+  );
 }

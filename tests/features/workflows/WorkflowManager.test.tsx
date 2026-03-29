@@ -116,8 +116,8 @@ describe("WorkflowManager", () => {
     const menuItems = trigger
       .closest(".workflow-more")
       ?.querySelectorAll('.workflow-more-item[role="menuitem"]') as NodeListOf<HTMLElement>;
-    // menu order: Run, Upload New Version, Delete
-    await user.click(menuItems[1]);
+    // menu order: Run, Check Dependencies, Upload New Version, Delete
+    await user.click(menuItems[2]);
 
     expect(props.onUploadWorkflowVersion).toHaveBeenCalledWith(workflows[0]);
     expect(menu).toHaveClass("hidden");
