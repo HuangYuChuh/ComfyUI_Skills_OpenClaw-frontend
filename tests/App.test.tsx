@@ -532,10 +532,10 @@ describe('App', () => {
     const workflowManager = screen.getByRole('region', { name: 'Workflow Manager' });
     await user.click(within(workflowManager).getByRole('button', { name: 'Manage' }));
     await user.click(within(workflowManager).getByRole('checkbox', { name: 'Select workflow wf-a' }));
-    await user.click(within(workflowManager).getByRole('button', { name: 'Delete selected' }));
+    await user.click(within(workflowManager).getByRole('button', { name: 'Delete' }));
 
     const dialog = await screen.findByRole('dialog');
-    await user.click(within(dialog).getByRole('button', { name: 'Delete selected' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
     await waitFor(() => {
       expect(batchDeleteWorkflowsMock).toHaveBeenCalledWith('local', { workflow_ids: ['wf-a'] });
@@ -564,6 +564,7 @@ describe('App', () => {
         name: 'Remote',
         url: 'http://10.0.0.1:8188',
         auth: '',
+        comfy_api_key: '',
         enabled: true,
         output_dir: './outputs',
       });
@@ -646,6 +647,7 @@ describe('App', () => {
         name: 'Local Updated',
         url: 'http://127.0.0.1:8188',
         auth: '',
+        comfy_api_key: '',
         enabled: true,
         output_dir: './outputs',
       });
