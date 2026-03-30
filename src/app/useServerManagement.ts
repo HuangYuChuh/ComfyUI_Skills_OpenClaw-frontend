@@ -63,7 +63,7 @@ export function useServerManagement(args: UseServerManagementArgs) {
 
   function handleEditServer(server: ServerDto) {
     setServerModalMode("edit");
-    setServerForm({ id: server.id, name: server.name, url: server.url, auth: server.auth || "", enabled: server.enabled, output_dir: server.output_dir });
+    setServerForm({ id: server.id, name: server.name, url: server.url, auth: server.auth || "", comfy_api_key: server.comfy_api_key || "", enabled: server.enabled, output_dir: server.output_dir });
     setServerModalOpen(true);
   }
 

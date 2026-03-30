@@ -32,6 +32,7 @@ export function defaultServerForm(): SaveServerPayload {
     name: "",
     url: "",
     auth: "",
+    comfy_api_key: "",
     enabled: true,
     output_dir: "./outputs",
   };

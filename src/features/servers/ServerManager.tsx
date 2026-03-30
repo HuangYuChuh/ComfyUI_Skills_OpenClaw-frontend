@@ -48,6 +48,7 @@ export function ServerManager(props: ServerManagerProps) {
 
   const [serverStatus, setServerStatus] = useState<ServerRunStatus>("checking");
   const [showAuth, setShowAuth] = useState(false);
+  const [showComfyApiKey, setShowComfyApiKey] = useState(false);
   const [testResult, setTestResult] = useState<{ state: "idle" | "testing" | "online" | "offline"; message?: string }>({ state: "idle" });
   const [importAfterCreate, setImportAfterCreate] = useState(false);
 
@@ -332,6 +333,36 @@ export function ServerManager(props: ServerManagerProps) {
                 </span>
               )}
             </div>
+          </FieldShell>
+          <FieldShell
+            label={props.t("comfy_api_key_label")}
+            htmlFor="modal-server-comfy-api-key"
+            helpText={<>{props.t("comfy_api_key_help_prefix")}<a href="https://platform.comfy.org/login" target="_blank" rel="noopener noreferrer">{props.t("comfy_api_key_help_link")}</a>{props.t("comfy_api_key_help_suffix")}</>}
+            className="form-group-full"
+          >
+            <TextField
+                id="modal-server-comfy-api-key"
+                type={showComfyApiKey ? "text" : "password"}
+                fieldClassName="modal-text-field"
+                value={props.form.comfy_api_key ?? ""}
+                onChange={onInputChange("comfy_api_key")}
+                placeholder={props.t("comfy_api_key_placeholder")}
+                autoComplete="off"
+                trailingAction={(
+                  <button
+                    type="button"
+                    className="btn-icon input-toggle-btn"
+                    onClick={() => setShowComfyApiKey((value) => !value)}
+                    aria-label={showComfyApiKey ? "Hide API key" : "Show API key"}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                      {!showComfyApiKey && <line x1="1" y1="1" x2="23" y2="23" />}
+                    </svg>
+                  </button>
+                )}
+              />
           </FieldShell>
           <FieldShell
             label={props.t("server_output_dir")}
