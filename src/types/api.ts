@@ -3,6 +3,7 @@ export interface ServerDto {
   name: string;
   url: string;
   auth?: string;
+  comfy_api_key?: string;
   enabled: boolean;
   output_dir: string;
   server_type?: string;
@@ -192,6 +193,7 @@ export interface SaveServerPayload {
   name: string;
   url: string;
   auth?: string;
+  comfy_api_key?: string;
   enabled: boolean;
   output_dir: string;
 }
