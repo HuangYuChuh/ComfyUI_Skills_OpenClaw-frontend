@@ -14,6 +14,7 @@ export function LanguageSelect({ value, onChange }: LanguageSelectProps) {
         { value: "en", label: "English" },
         { value: "zh", label: "简体中文" },
         { value: "zh_hant", label: "繁體中文" },
+        { value: "ja", label: "日本語" },
       ]}
       onChange={(next) => onChange(next as Language)}
       ariaLabel="Language selector"

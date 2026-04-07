@@ -1,6 +1,6 @@
 import { messages } from "./messages";
 
-export type Language = "en" | "zh" | "zh_hant";
+export type Language = "en" | "zh" | "zh_hant" | "ja";
 
 export function normalizeLanguage(language?: string | null): Language {
   if (!language) {
@@ -12,6 +12,9 @@ export function normalizeLanguage(language?: string | null): Language {
   }
   if (value === "zh_hant" || value === "zh-tw" || value === "zh-hant") {
     return "zh_hant";
+  }
+  if (value === "ja" || value.startsWith("ja")) {
+    return "ja";
   }
   return "en";
 }
